@@ -33,6 +33,9 @@ namespace OAuch {
 
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services) {
+            // The app secrets are stored either in a user secrets file (for development)
+            // or in IIS environment variables (applicationHost.config in %windir%\system32\inetsrv\config)
+            // Also see https://learn.microsoft.com/en-us/iis/configuration/system.applicationhost/applicationpools/add/environmentvariables/
             var secrets = Configuration.GetSection("Secrets").Get<Secrets>()!;
 
             var builder = services.AddControllersWithViews();
