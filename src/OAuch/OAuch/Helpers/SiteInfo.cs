@@ -18,7 +18,7 @@ namespace OAuch.Helpers {
 #if DEBUG
                     _buildVersion += "d";
 #endif
-                    _buildVersion += $" (.NET {Environment.Version.ToString(3)} / {GetOS()} / {RuntimeInformation.OSArchitecture})";
+                    //_buildVersion += $" (.NET {Environment.Version.ToString(3)} / {GetOS()} / {RuntimeInformation.OSArchitecture})";
                 }
                 return _buildVersion;
             }
