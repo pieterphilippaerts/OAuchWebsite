@@ -9,10 +9,15 @@ namespace OAuch.Controllers {
     public abstract class BaseController : Controller {
         public Guid? OAuchInternalId {
             get {
-                // This version of OAuch doesn't support multiple users
-                // so we always return the same user ID 
-                return Guid.Empty;
+                if (_oauchInternalId == null && this.User != null) {
+                    var claim = this.User.FindFirst(LoginController.OAuchInternalIdClaimType);
+                    if (claim != null && Guid.TryParseExact(claim.Value, "N", out var internalId)) {
+                        _oauchInternalId = internalId;
+                    }
+                }
+                return _oauchInternalId;
             }
         }
+        private Guid? _oauchInternalId;
     }
 }

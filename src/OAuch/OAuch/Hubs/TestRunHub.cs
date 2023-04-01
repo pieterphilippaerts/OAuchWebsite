@@ -21,7 +21,7 @@ namespace OAuch.Hubs {
                 Guid? oauchInternalId = null;
                 var user = this.Context.User;
                 if (user != null) {
-                    var claim = user.FindFirst("https://oauch.io/internalid");
+                    var claim = user.FindFirst(LoginController.OAuchInternalIdClaimType);
                     if (claim != null && Guid.TryParseExact(claim.Value, "N", out var internalId)) {
                         oauchInternalId = internalId;
                     }

@@ -1,0 +1,29 @@
+﻿@model OAuch.ViewModels.LoginLinkViewModel
+@{
+    ViewData["Title"] = "Login Link Created";
+}
+<div class="row">
+    <div class="col-sm-12 offset-md-1 col-md-10 offset-lg-2 col-lg-8 offset-xl-2 col-xl-5 ">
+        <p style="font-family: Josefin Sans; font-size: 60px; font-weight: bold;">
+            Login link created
+        </p>
+        <p style="font-family: Josefin Sans; font-size: 16px;">
+            This browser's session has been associated with an anonymous login. If you want to
+            sign into this session from a different browser (or when this browser's session times out),
+            you can use the following link to log in again.
+        </p>
+        <p style="font-family: Josefin Sans; font-size: 16px;">
+            <a href="/Login/Link/@Model.LinkId">https://oauch.io/Login/Link/@Model.LinkId</a>
+        </p>
+        <p style="font-family: Josefin Sans; font-size: 16px;">
+            Keep this link safe. Anyone with access to this link will be able to log into this session.
+            If you want more security, consider using one of the social logins instead.
+        </p>
+        <p style="text-align: center;">
+            <a href="/Dashboard" class="btn btn-primary btn-lg" style="margin: 10px; padding-left: 40px; padding-right: 40px;">Continue</a>
+        </p>
+    </div>
+    <div class="d-none d-xl-block col-xl-3">
+        <img src="/img/logo_large.png" class="img-responsive" />
+    </div>
+</div>

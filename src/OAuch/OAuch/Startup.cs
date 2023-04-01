@@ -21,6 +21,7 @@ using OAuch.Protocols.OAuth2;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Rewrite;
 using OAuch.Shared.Interfaces;
+using OAuch.Workers;
 
 namespace OAuch {
     public class Startup {
@@ -32,6 +33,8 @@ namespace OAuch {
 
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services) {
+            var secrets = Configuration.GetSection("Secrets").Get<Secrets>()!;
+
             var builder = services.AddControllersWithViews();
             services.AddDbContext<OAuchDbContext>();
             services.AddSignalR();
@@ -49,6 +52,30 @@ namespace OAuch {
                 {
                     options.LoginPath = "/Home";
                     options.ClaimsIssuer = "OAUCH";
+                })
+                .AddGoogle(options => {
+                    options.ClientId = secrets.GoogleClientId;
+                    options.ClientSecret = secrets.GoogleClientSecret;
+                    options.UsePkce = true;
+                    options.AccessDeniedPath = "/";
+                })
+                .AddFacebook(options => {
+                    options.ClientId = secrets.FacebookClientId;
+                    options.ClientSecret = secrets.FacebookClientSecret;
+                    options.UsePkce = true;
+                    options.AccessDeniedPath = "/";
+                })
+                .AddMicrosoftAccount(options => {
+                    options.ClientId = secrets.MicrosoftClientId;
+                    options.ClientSecret = secrets.MicrosoftClientSecret;
+                    options.UsePkce = true;
+                    options.AccessDeniedPath = "/";
+                })
+                .AddTwitter(options => {
+                    options.ConsumerKey = secrets.TwitterClientId;
+                    options.ConsumerSecret = secrets.TwitterClientSecret;
+                    options.RetrieveUserDetails = false;
+                    options.AccessDeniedPath = "/";
                 });
 
 
@@ -63,11 +90,12 @@ namespace OAuch {
             services.AddSingleton<ILogConverter<CallbackResult>>(new CallbackConverter());
             services.AddSingleton<ILogConverter<TokenResult>>(new TokenResultConverter());
             services.AddSingleton<ICertificateResolver>(new CertificateResolver());
+            services.AddSingleton(secrets!);
             services.AddRazorPages();
-
 #if DEBUG
             builder.AddRazorRuntimeCompilation();
 #endif
+            services.AddHostedService<EMailWorker>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

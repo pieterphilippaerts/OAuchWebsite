@@ -100,6 +100,14 @@
                     <a href="/Home/About" class="nav-link">About OAuch</a>
                 </li>
             </ul>
+
+            @if (isAuthenticated) {
+                <ul class="navbar-nav ml-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" data-slide="true" href="/Login/Invalidate"><i class="far fa-user-circle"></i> Sign out</a>
+                    </li>
+                </ul>
+            }
         </nav>
         <!-- /.navbar -->
         @if (hasSidebar && menuInfo != null) {
@@ -196,7 +204,7 @@
             <div class="float-right d-none d-sm-block">
                 <b>Version</b> @SiteInfo.BuildVersion
             </div>
-            <strong>@SiteInfo.Copyright <a href="/Home/About">The DistriNet Research Group</a>.</strong> All rights reserved.</a>
+            <strong>@SiteInfo.Copyright <a href="/Home/About">The DistriNet Research Group</a>.</strong> All rights reserved. <a href="/Home/Privacy">Privacy Policy</a> &mdash; <a href="/Home/Terms">Terms of Service</a>
         </footer>
 
         <!-- Control Sidebar -->

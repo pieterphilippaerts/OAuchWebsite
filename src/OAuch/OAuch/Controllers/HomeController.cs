@@ -19,18 +19,9 @@ namespace OAuch.Controllers {
         }
 
         public async Task<IActionResult> Index() {
-            var claimType = "https://oauch.io/internalid";
-            if (!this.User.Claims.Any(c => c.Type == claimType)) { // no active session
-                // sign the user in as a dummy user
-                var oauchIdentity = new ClaimsIdentity(new Claim[] {                
-                    new Claim(claimType, this.OAuchInternalId!.Value.ToString("N"))
-                    }, "OAuchAuthentication");
-                await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(oauchIdentity), new AuthenticationProperties
-                {
-                    IsPersistent = true
-                });
-            }
-            return RedirectToAction("Index", "Dashboard");
+            if (this.OAuchInternalId != null)
+                return RedirectToAction("Index", "Dashboard");
+            return View();
         }
         public IActionResult Faq() {
             return View();

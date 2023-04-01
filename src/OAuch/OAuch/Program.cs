@@ -27,9 +27,6 @@ namespace OAuch
 
             var h = CreateHostBuilder(args).Build();
             ServiceLocator.Configure(h.Services);
-            using (var db = new OAuchDbContext()) {
-                db.Database.EnsureCreated();
-            }
             h.Run();
         }
 

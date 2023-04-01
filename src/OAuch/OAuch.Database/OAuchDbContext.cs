@@ -33,7 +33,7 @@ namespace OAuch.Database {
                 conf = _configuration;
             options
                 .UseLazyLoadingProxies()
-                .UseSqlite(conf.GetConnectionString("OAuchDbContextConnection"));
+                .UseSqlServer(conf.GetConnectionString("OAuchWebContextConnection"));
         }
         protected override void OnModelCreating(ModelBuilder modelBuilder) {
             base.OnModelCreating(modelBuilder);

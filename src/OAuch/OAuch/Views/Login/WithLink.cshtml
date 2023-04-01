@@ -1,0 +1,39 @@
+﻿@using OAuch.Helpers
+@using OAuch.Shared;
+@{
+    ViewData["Title"] = "Create Login Link";
+
+    string GetCaptchaSiteKey() {
+        var secrets = ServiceLocator.Resolve<Secrets>()!;
+        return secrets.CaptchaSiteKey;
+    }
+}
+<div class="row">
+    <div class="col-sm-12 offset-md-1 col-md-10 offset-lg-2 col-lg-8 offset-xl-2 col-xl-5 ">
+        <p style="font-family: Josefin Sans; font-size: 60px; font-weight: bold;">
+            Create Login Link
+        </p>
+        <p style="font-family: Josefin Sans; font-size: 16px;">
+            This browser's session will be associated with an anonymous login. OAuch will create a <em>login link</em>
+            that you can use to sign into this session from a different browser (or when this browser's session times out).
+        </p>
+        @using (Html.BeginForm("CreateLink", "Login", FormMethod.Post)) {
+            <div class="row">
+                <div class="col-sm-10 offset-sm-1">
+                    <p>
+                        <div class="g-recaptcha" data-sitekey="@GetCaptchaSiteKey()"></div>
+                    </p>
+                    <p style="text-align: center;">
+                        <button class="btn btn-primary btn-lg" type="submit" style="margin: 10px; padding-left: 40px; padding-right: 40px;">Create Link</button>
+                    </p>
+                </div>
+            </div>
+        }
+    </div>
+    <div class="d-none d-xl-block col-xl-3">
+        <img src="/img/logo_large.png" class="img-responsive" />
+    </div>
+</div>
+@section Scripts {
+    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
+}  
