@@ -81,7 +81,6 @@ namespace OAuch {
                     options.AccessDeniedPath = "/";
                 });
 
-
             // add logging services
             services.AddSingleton<ILogConverter<Exception>>(new ExceptionConverter());
             services.AddSingleton<ILogConverter<HttpRequest>>(new HttpRequestConverter());
@@ -131,7 +130,6 @@ namespace OAuch {
             app.UseStaticFiles();
 
             app.UseRouting();
-            //app.UseDummyAuthentication();
             app.UseAuthentication();
             app.UseAuthorization();
 
