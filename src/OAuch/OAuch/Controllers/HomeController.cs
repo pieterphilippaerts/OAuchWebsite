@@ -35,5 +35,9 @@ namespace OAuch.Controllers {
         public IActionResult Terms() {
             return View();
         }
+
+        public IActionResult Docker() {
+            return View();
+        }
     }
 }

@@ -1,0 +1,33 @@
+﻿@{
+    ViewData["Title"] = "OAuch on Docker";
+}
+<div class="row">
+    <div class="col-lg-10 col-xl-8 offset-lg-1 offset-xl-2">
+        <h1>Run OAuch on Docker</h1>
+    </div>
+    <div class="col-lg-10 col-xl-6 offset-lg-1 offset-xl-2">
+        <p>
+            Docker is an open-source platform that allows developers to package, distribute, and run applications within containers. Containers are lightweight, 
+            portable, and self-sufficient environments that can run anywhere, regardless of the underlying infrastructure. With Docker, developers can package
+            their applications and all their dependencies into a single container, making it easy to move applications between development, testing, and 
+            production environments, and ensuring that they will run consistently across different environments.
+        </p>
+        <p>
+            OAuch is available on <a href="https://hub.docker.com/repository/docker/pieterphilippaerts/oauch-image/general" target="_blank">Docker Hub</a> &#8212; a public 
+            repository for Docker images. To download the official OAuch docker images, run:
+            <pre>docker pull pieterphilippaerts/oauch-image
+docker run --name oauch -p 443:443 pieterphilippaerts/oauch-image</pre>
+            This downloads the OAuch image and runs a container named `oauch' that is based on the OAuch image. It also maps HTTPS port 443 from the container on port 443 of the host.
+        </p>
+        <p>
+            You can optionally modify the HOSTS file on the Docker host to override the DNS resolution of oauch.io. In Windows, go to the directory <code>C:\Windows\System32\drivers\etc</code> 
+            and open the <code>hosts</code> file in a text editor. In Linux/MacOS, open the file <code>/etc/hosts</code> in a text editor. Make sure the text editor has administrative privileges
+            (i.e., it has been started via the 'Run as administrator' option or 'sudo'). Add the following line to the file and save it:
+            <pre>127.0.0.1   oauch.io</pre>
+            Make sure you close all your browser windows after this change. Many browsers use an internal DNS cache that is only reset after you close the browser.
+        </p>
+    </div>
+    <div class="d-none d-xl-block col-xl-2">
+        <img src="/img/logo_large.png" @*class="img-responsive"*@ style="width: 256px; height: 256px;" />
+    </div>
+</div>

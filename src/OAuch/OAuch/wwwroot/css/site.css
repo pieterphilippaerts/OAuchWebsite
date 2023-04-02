@@ -71,7 +71,6 @@
     background-color: #233F90;
     border-color: #d39e00;
 }
-
 .btn-gg {
     color: #ffffff;
     background-color: #DF4932;
@@ -83,7 +82,6 @@
     background-color: #C12B14;
     border-color: #d39e00;
 }
-
 .btn-ms {
     color: #ffffff;
     background-color: #008542;
@@ -95,7 +93,6 @@
     background-color: #006724;
     border-color: #d39e00;
 }
-
 .btn-tw {
     color: #ffffff;
     background-color: #1EA8E3;
@@ -107,10 +104,21 @@
     background-color: #008AC5;
     border-color: #d39e00;
 }
+.btn-dc {
+    color: #ffffff;
+    background-color: #003F8C;
+    border-color: #ffc107;
+    box-shadow: none;
+}
+.btn-dc:hover {
+    color: #ffffff;
+    background-color: #002B78;
+    border-color: #d39e00;
+}
 .img-responsive {
     max-width: 100%;
     height: auto;
-    display:block;
+    display: block;
 }
 .cw {
     color: white;
