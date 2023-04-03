@@ -16,15 +16,18 @@
             OAuch is available on <a href="https://hub.docker.com/repository/docker/pieterphilippaerts/oauch-image/general" target="_blank">Docker Hub</a> &#8212; a public 
             repository for Docker images. To download the official OAuch docker images, run:
             <pre>docker pull pieterphilippaerts/oauch-image
-docker run --name oauch -p 443:443 pieterphilippaerts/oauch-image</pre>
-            This downloads the OAuch image and runs a container named `oauch' that is based on the OAuch image. It also maps HTTPS port 443 from the container on port 443 of the host.
+docker volume create oauch-volume
+docker run --name oauch -p 443:443 -v oauch-volume:/db pieterphilippaerts/oauch-image</pre>
+            This downloads the OAuch image, creates a Docker volume to store the database, and runs a container named `oauch' that is based on the OAuch image. It also maps
+            HTTPS port 443 from the container on port 443 of the host.
         </p>
         <p>
             You can optionally modify the HOSTS file on the Docker host to override the DNS resolution of oauch.io. In Windows, go to the directory <code>C:\Windows\System32\drivers\etc</code> 
             and open the <code>hosts</code> file in a text editor. In Linux/MacOS, open the file <code>/etc/hosts</code> in a text editor. Make sure the text editor has administrative privileges
             (i.e., it has been started via the 'Run as administrator' option or 'sudo'). Add the following line to the file and save it:
             <pre>127.0.0.1   oauch.io</pre>
-            Make sure you close all your browser windows after this change. Many browsers use an internal DNS cache that is only reset after you close the browser.
+            Make sure you close all your browser windows after this change. Many browsers use an internal DNS cache that is only reset after you close the browser. You should now be able to access
+            OAuch running in the Docker container by going to <code>https://localhost/</code> (or by going to <code>https://oauch.io/</code> if you have modified the HOSTS file).
         </p>
     </div>
     <div class="d-none d-xl-block col-xl-2">
