@@ -100,12 +100,12 @@ namespace OAuch {
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env) {
-            if (env.IsDevelopment()) {
-                app.UseDeveloperExceptionPage();
-            } else {
-                app.UseExceptionHandler("/Home/Error");
-                //app.UseHsts(); // HSTS must be disabled, or the non-oauch.io-redirects won't work
-            }
+#if DEBUG
+            app.UseDeveloperExceptionPage();
+#else
+            app.UseExceptionHandler("/Home/Error");
+            //app.UseHsts(); // HSTS must be disabled, or the non-oauch.io-redirects won't work
+#endif
             app.Use(async (context, next) => {
                 /* Do not add Strict-Transport-Security */
                 context.Response.Headers.Add("X-Frame-Options", "DENY");
