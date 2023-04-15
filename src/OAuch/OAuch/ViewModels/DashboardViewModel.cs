@@ -12,5 +12,6 @@ namespace OAuch.ViewModels {
 
         //public Dictionary<Site, DateTime> SiteDeadlines { get; set; }
         public List<SiteResult> SiteResults { get; set; }
+        public bool IsFirstLogin { get; set; }
     }
 }

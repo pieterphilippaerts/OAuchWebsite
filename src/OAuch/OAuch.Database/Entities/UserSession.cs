@@ -13,5 +13,6 @@ namespace OAuch.Database.Entities {
         public Guid InternalId { get; set; }
         public string? RemoteIp { get; set; }
         public DateTime? LoggedInAt { get; set; }
+        public DateTime? TOS { get; set; } // when did we show the user the 'Terms of Service' dialog on the dashboard?
     }
 }

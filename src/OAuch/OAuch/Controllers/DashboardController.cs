@@ -54,8 +54,15 @@ namespace OAuch.Controllers {
         public IActionResult Index() {
             var model = new DashboardViewModel();
             FillMenu(model);
-
             model.SiteResults = GetSiteResults();
+            if (OAuchInternalId != null) {
+                var user = Database.UserSessions.FirstOrDefault(c => c.InternalId == OAuchInternalId);
+                if (user != null && user.TOS == null) {
+                    user.TOS = DateTime.Now;
+                    Database.SaveChanges();
+                    model.IsFirstLogin = true;
+                }
+            }
             return View(model);
         }
         protected override void Dispose(bool disposing) {
