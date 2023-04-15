@@ -17,7 +17,7 @@
         public  string GoogleClientId { get; set; }
         public  string GoogleClientSecret { get; set; }
         
-        public  string TwitterClientId { get; set; }
-        public  string TwitterClientSecret { get; set; }
+        //public  string TwitterClientId { get; set; }
+        //public  string TwitterClientSecret { get; set; }
     }
 }

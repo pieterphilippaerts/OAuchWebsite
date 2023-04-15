@@ -29,7 +29,6 @@
     <PackageReference Include="Microsoft.AspNetCore.Authentication.Facebook" Version="7.0.4" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.Google" Version="7.0.4" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.MicrosoftAccount" Version="7.0.4" />
-    <PackageReference Include="Microsoft.AspNetCore.Authentication.Twitter" Version="7.0.4" />
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation" Version="7.0.4" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="7.0.4">
       <PrivateAssets>all</PrivateAssets>

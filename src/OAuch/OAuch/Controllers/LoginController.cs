@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.Facebook;
 using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Authentication.MicrosoftAccount;
-using Microsoft.AspNetCore.Authentication.Twitter;
+//using Microsoft.AspNetCore.Authentication.Twitter;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using OAuch.Database;
@@ -133,17 +133,17 @@ namespace OAuch.Controllers {
         }
         public Task<IActionResult> ProcessMicrosoft() => Process(MicrosoftAccountDefaults.AuthenticationScheme);
 
-        public async Task WithTwitter() {
-            var authProperties = new AuthenticationProperties
-            {
-                AllowRefresh = true,
-                IsPersistent = true,
-                IssuedUtc = DateTimeOffset.UtcNow,
-                RedirectUri = "https://oauch.io/Login/ProcessTwitter"
-            };
-            await HttpContext.ChallengeAsync(TwitterDefaults.AuthenticationScheme, authProperties);
-        }
-        public Task<IActionResult> ProcessTwitter() => Process(TwitterDefaults.AuthenticationScheme);
+        //public async Task WithTwitter() {
+        //    var authProperties = new AuthenticationProperties
+        //    {
+        //        AllowRefresh = true,
+        //        IsPersistent = true,
+        //        IssuedUtc = DateTimeOffset.UtcNow,
+        //        RedirectUri = "https://oauch.io/Login/ProcessTwitter"
+        //    };
+        //    await HttpContext.ChallengeAsync(TwitterDefaults.AuthenticationScheme, authProperties);
+        //}
+        //public Task<IActionResult> ProcessTwitter() => Process(TwitterDefaults.AuthenticationScheme);
 
 
         [NonAction]

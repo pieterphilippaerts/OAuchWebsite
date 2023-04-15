@@ -47,12 +47,10 @@ namespace OAuch {
             //    options.MaxAge = TimeSpan.FromSeconds(63072000);
             //});
 
-            services.AddAuthentication(options =>
-            {
+            services.AddAuthentication(options => {
                 options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
             })
-                .AddCookie(CookieAuthenticationDefaults.AuthenticationScheme, options =>
-                {
+                .AddCookie(CookieAuthenticationDefaults.AuthenticationScheme, options => {
                     options.LoginPath = "/Home";
                     options.ClaimsIssuer = "OAUCH";
                 })
@@ -73,13 +71,13 @@ namespace OAuch {
                     options.ClientSecret = secrets.MicrosoftClientSecret;
                     options.UsePkce = true;
                     options.AccessDeniedPath = "/";
-                })
-                .AddTwitter(options => {
-                    options.ConsumerKey = secrets.TwitterClientId;
-                    options.ConsumerSecret = secrets.TwitterClientSecret;
-                    options.RetrieveUserDetails = false;
-                    options.AccessDeniedPath = "/";
                 });
+                //.AddTwitter(options => {
+                //    options.ConsumerKey = secrets.TwitterClientId;
+                //    options.ConsumerSecret = secrets.TwitterClientSecret;
+                //    options.RetrieveUserDetails = false;
+                //    options.AccessDeniedPath = "/";
+                //});
 
             // add logging services
             services.AddSingleton<ILogConverter<Exception>>(new ExceptionConverter());
