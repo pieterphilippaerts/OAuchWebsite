@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.AspNetCore.Authentication.Facebook;
+//using Microsoft.AspNetCore.Authentication.Facebook;
 using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Authentication.MicrosoftAccount;
 //using Microsoft.AspNetCore.Authentication.Twitter;
@@ -109,17 +109,17 @@ namespace OAuch.Controllers {
         }
         public Task<IActionResult> ProcessGoogle() => Process(GoogleDefaults.AuthenticationScheme);
 
-        public async Task WithFacebook() {
-            var authProperties = new AuthenticationProperties
-            {
-                AllowRefresh = true,
-                IsPersistent = true,
-                IssuedUtc = DateTimeOffset.UtcNow,
-                RedirectUri = "https://oauch.io/Login/ProcessFacebook"
-            };
-            await HttpContext.ChallengeAsync(FacebookDefaults.AuthenticationScheme, authProperties);
-        }
-        public Task<IActionResult> ProcessFacebook() => Process(FacebookDefaults.AuthenticationScheme);
+        //public async Task WithFacebook() {
+        //    var authProperties = new AuthenticationProperties
+        //    {
+        //        AllowRefresh = true,
+        //        IsPersistent = true,
+        //        IssuedUtc = DateTimeOffset.UtcNow,
+        //        RedirectUri = "https://oauch.io/Login/ProcessFacebook"
+        //    };
+        //    await HttpContext.ChallengeAsync(FacebookDefaults.AuthenticationScheme, authProperties);
+        //}
+        //public Task<IActionResult> ProcessFacebook() => Process(FacebookDefaults.AuthenticationScheme);
 
         public async Task WithMicrosoft() {
             var authProperties = new AuthenticationProperties
