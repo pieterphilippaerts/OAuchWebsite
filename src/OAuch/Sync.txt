@@ -1,0 +1,9 @@
+
+Sync this fork with the original OAuch:
+https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/working-with-forks/syncing-a-fork
+
+cd OAuchWebsite
+git fetch upstream
+git checkout main
+git merge upstream/main
+[resolve merge conflicts]
