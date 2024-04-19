@@ -1,0 +1,33 @@
+﻿@using OAuch.OAuthThreatModel.Enrichers
+@using OAuch.OAuthThreatModel.Threats
+@using OAuch.Shared.Enumerations
+@model AttacksViewModel
+@{
+    Layout = null;
+}
+
+<p><strong>Potential Attack Scenarios</strong></p>
+<p>The attack scenarios listed below are based on the analysis of the threats that are unmitigated or partially mitigated. The attacks described
+    here may or may not be exploitable, depending on implementation details of the OAuth service and the capabilities of the attacker.</p>
+@using (Html.BeginForm("AttackList", "Dashboard", new { id = Model.Id }, FormMethod.Post, null, new { id = "attackForm" })) {
+        <partial name="~/Views/Dashboard/AttackList.cshtml" model="@Model"></partial>
+}
+<script>
+    $(function () {
+        $('#attackForm').submit(function (event) {
+            event.preventDefault();
+            var formData = $(this).serialize();
+            $.ajax({
+                url: '@Url.Action("AttackList", "Dashboard", new { Id = Model.Id })',
+                type: 'POST',
+                data: formData,
+                success: function (response) {
+                    $('#attackForm').html(response);
+                },
+                error: function (xhr, status, error) {
+                    $('#attackForm').html("<p>An unexpected error occurred while processing the request.</p>");
+                }
+            });
+        });
+    });
+</script>

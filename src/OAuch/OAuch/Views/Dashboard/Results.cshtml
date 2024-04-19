@@ -3,6 +3,7 @@
 @using OAuch.Shared.Enumerations
 @using OAuch.Compliance.Results
 @using OAuch.Helpers
+@using System.Diagnostics
 @{
     ViewData["Title"] = "Site results";
 
@@ -117,6 +118,16 @@
             return $"Implementing this countermeasure could fully mitigate {report.FullyMitigatesCount} threat(s) [score: {report.Score.ToString("F2")}]";
         return $"Implementing this countermeasure could partially mitigate {report.PartiallyMitigatesCount} threat(s) [score: {report.Score.ToString("F2")}]";
     }
+    int GetSortIndex(string threatId) {
+        if (threatId.StartsWith("6819_")) {
+            return 1;
+        } else if (threatId.StartsWith("BCP_")) {
+            return 2;
+        } else {
+            return 3;
+        }
+
+    }
 }
 @*<div class="modal fade" id="ratingInfo" tabindex="-1" role="dialog" aria-labelledby="ratingInfoLabel">
         <div class="modal-dialog modal-lg" role="document">
@@ -151,11 +162,11 @@
         </div>
     </div>*@
 <div class="row">
-    <div class="col-12 col-lg-10 col-xl-8">
+    <div class="col-12" style="max-width: 25cm;">
         <h1 class="display-4">Site results</h1>
 
         <div class="row">
-            <div class="col-8">
+            <div class="col-12 col-xl-8">
                 @if (Model.Result.PendingTests > 0) {
                     <p>
                         There are @Model.Result.PendingTests pending test(s) that have not been (fully) executed yet. Hence, the results presented here are incomplete.
@@ -173,6 +184,11 @@
                     The site was successfully tested on @Model.StartedAt.ToString("MMMM d, yyyy") at @Model.StartedAt.ToString("HH:mm"). The details of this test run can be found below.
                     To test the site again, <a href="@Url.Action("RunTest", "Dashboard", new { id = Model.SiteId })">click here to start a new test run</a>.
                 </p>
+                @if (Debugger.IsAttached) {
+                    <p>
+                        If you are debugging OAuch and want to add new testcases to the current site results, please @Html.ActionLink("resume the test run", "Resume", new { id = Model.ResultId }).
+                    </p>
+                }
             </div>
             @*<div class="col-4" style="text-align:center;">
                     <a href="#" data-toggle="modal" data-target="#ratingInfo">
@@ -197,6 +213,9 @@
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link" id="custom-tabs-three-threats-tab" data-toggle="pill" href="#custom-tabs-three-threats" role="tab" aria-controls="custom-tabs-three-threats" aria-selected="false">Threats</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" id="custom-tabs-three-attacks-tab" onclick="showAttacks();" data-toggle="pill" href="#custom-tabs-three-attacks" role="tab" aria-controls="custom-tabs-three-attacks" aria-selected="false">Attacks</a>
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link" id="custom-tabs-three-log-tab" onclick="showLog();" data-toggle="pill" href="#custom-tabs-three-log" role="tab" aria-controls="custom-tabs-three-log" aria-selected="false">Full log</a>
@@ -339,11 +358,34 @@
                                 </ul>
                             </div>
                             <div class="tab-pane fade" id="custom-tabs-three-threats" role="tabpanel" aria-labelledby="custom-tabs-three-threats-tab">
-                                @foreach (var threatReport in Model.Result.ThreatReports) {
+                                @{
+                                    string? currentDocument = "X";
+                                }
+                                @foreach (var threatReport in Model.Result.ThreatReports.OrderBy(c => GetSortIndex(c.Threat.Id))) {
+                                    var id = threatReport.Threat.Id;
+                                    if (currentDocument != null && !id.StartsWith(currentDocument)) {
+                                        // new document, write title
+                                        if (currentDocument != "X") {
+                                            <p>&nbsp;</p>
+                                        }
+                                        if (id.StartsWith("6819_")) {
+                                            <strong>The OAuth Threat Model</strong>
+                                            <p>The following threats are listed in the OAuth Threat Model (<a href="https://datatracker.ietf.org/doc/html/rfc6819" target="_blank">RFC6819</a>).</p>
+                                            currentDocument = "6819_";
+                                        } else if (id.StartsWith("BCP_")) {
+                                            <strong>The OAuth Security Best Current Practices</strong>
+                                            <p>The following threats are listed in the OAuth Security Best Current Practices (<a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-security-topics" target="_blank">BCP</a>).</p>
+                                            currentDocument = "BCP_";
+                                        } else {
+                                            <strong>Other Documents</strong>
+                                            <p>The following threats are listed in other documents, such as <a href="https://datatracker.ietf.org/doc/html/rfc7009" target="_blank">RFC7009</a>, <a href="https://datatracker.ietf.org/doc/html/rfc7159" target="_blank">RFC7519</a>, <a href="https://datatracker.ietf.org/doc/html/rfc7523" target="_blank">RFC7523</a>, and <a href="https://openid.net/specs/openid-connect-core-1_0.html" target="_blank">the OpenID Connect specification</a>.</p>
+                                            currentDocument = null;
+                                        }
+                                    }
                                     <div class="card collapsed-card">
                                         <div class="card-header bg-lightgray">
                                             <h5>
-                                                Threat <strong>`@threatReport.Threat.Title'</strong>
+                                                Threat <strong>'@threatReport.Threat.Title'</strong> [@threatReport.Threat.Id]
                                                 <button type="button" class="btn btn-tool" data-card-widget="collapse">[<i class="fas fa-plus"></i>]</button>
                                             </h5>
                                             <p>@threatReport.Threat.Description</p>
@@ -354,7 +396,12 @@
                                             } else {
                                                 foreach (var ireport in threatReport.InstanceReports) {
                                                     if (!ireport.IsRelevant.HasValue || ireport.IsRelevant.Value) {
-                                                        if (ireport.ThreatInstance.MitigatedBy.Count == 1) {
+                                                        if (ireport.ThreatInstance.MitigatedBy.Count == 0) {
+                                                            <p>
+                                                                This threat has no countermeasures that can be used to mitigate it. The only way to protect against it is by
+                                                                making sure that the prerequisites are not met (e.g., by disabling certain authorization grants or deprecated features).
+                                                            </p>
+                                                        } else  if (ireport.ThreatInstance.MitigatedBy.Count == 1) {
                                                             var mit = ireport.ThreatInstance.MitigatedBy[0];
                                                             <p>
                                                                 @if (!string.IsNullOrWhiteSpace(ireport.ThreatInstance.ExtraDescription)) {
@@ -368,7 +415,6 @@
                                                                     <li>@HelperMethods.ShortenTestId(cm.TestId) [<span class="@OutcomeClass(to, false)">@FormatOutcomeForCounterMeasure(to)</span>] - @Html.ActionLink("more info", "Info", "Tests", new { id = cm.TestId })</li>
                                                                 }
                                                             </ul>
-                                                            <p>&nbsp;</p>
                                                         } else {
                                                             <p>
                                                                 @if (!string.IsNullOrWhiteSpace(ireport.ThreatInstance.ExtraDescription)) {
@@ -391,12 +437,16 @@
                                                     }
                                                 }
                                             }
+                                            <p>@Html.ActionLink("More information about this threat", "Info", "Threats", new { id = threatReport.Threat.Id }, new { target = "_blank" }) </p>
                                         </div>
                                         <div class="ribbon-wrapper ribbon-lg">
                                             <div class="ribbon @OutcomeClass(threatReport.Outcome, true)">@FormatOutcomeForThreat(threatReport)</div>
                                         </div>
                                     </div>
                                 }
+                            </div>
+                            <div class="tab-pane fade" data-target="@Url.Action("Attacks", "Dashboard", new { id = Model.ResultId })" id="custom-tabs-three-attacks" role="tabpanel" aria-labelledby="custom-tabs-three-attacks-tab">
+                                <p><em>Loading attack scenarios... please wait</em></p>
                             </div>
                             <div class="tab-pane fade" data-target="@Url.Action("Log", "Dashboard", new { id = Model.ResultId })" id="custom-tabs-three-log" role="tabpanel" aria-labelledby="custom-tabs-three-log-tab">
                                 <p><em>Loading log file... please wait</em></p>
@@ -406,7 +456,7 @@
                                     Click on the button below to generate a report in a new tab/window. The report is optimized to be printed. If you would like the report in electronic form,
                                     you can use the browser to &lsquo;print&rsquo; the report to a PDF file (this is supported in most browsers).
                                 </p>
-                                <p>The report contains a summary of the results, and a detailed description of the failed test cases.</p>
+                                <p>The report contains a summary of the results, and a detailed description of the failed test cases.</p>                             
                                 @using (Html.BeginForm("Generate", "Report", new { id = Model.ResultId }, FormMethod.Get, null, new { target = "_blank" })) {
                                     <p>
                                             <div class="form-check">
@@ -418,12 +468,37 @@
                                     </p>
                                     <p>
                                         <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" data-toggle="toggle" data-size="sm" value="true" id="includeIndividualTests" name="includeIndividualTests" checked="checked">
+                                            <label class="form-check-label" for="includeIndividualTests">
+                                                &nbsp;&nbsp;Include individual test results
+                                            </label>
+                                        </div>
+                                    </p>
+                                    <p>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" data-toggle="toggle" data-size="sm" value="true" id="includeDeprecated" name="includeDeprecated" checked="checked">
+                                            <label class="form-check-label" for="includeDeprecated">
+                                                &nbsp;&nbsp;Include deprecated features
+                                            </label>
+                                        </div>
+                                    </p>
+                                    <p>
+                                            <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" data-toggle="toggle" data-size="sm" value="true" id="includeThreats" name="includeThreats" checked="checked">
+                                            <label class="form-check-label" for="includeThreats">
+                                                    &nbsp;&nbsp;Include threat overview
+                                                </label>
+                                            </div>
+                                    </p>
+                                    <p>
+                                        <div class="form-check">
                                             <input class="form-check-input" type="checkbox" data-toggle="toggle" data-size="sm" value="true" id="includeLog" name="includeLog" checked="checked">
                                             <label class="form-check-label" for="includeLog">
                                                 &nbsp;&nbsp;Include detailed log
                                             </label>
                                         </div>
                                     </p>
+                                    <p id="cautionLabel" class="text-danger"><strong>CAUTION:</strong> The generated report will contain potentially sensitive data, such as the the client secret, authentication keys, access tokens and refresh tokens.</p>
                                     <p class="text-center"><input type="submit" value="Generate Report" class="btn-primary" style="padding: 5px 15px;" /></p>
                                 }
                             </div>
@@ -443,7 +518,11 @@
                                 </p>
                                 <ul>
                                     @foreach (var he in Model.History) {
-                                        <li>@Html.ActionLink(he.When.ToString("MMMM d, yyyy") + " at " + he.When.ToString("HH:mm:ss"), "Results", "Dashboard", new { id = Model.SiteId, rid = he.HistoryId })</li>
+                                        if (he.HistoryId == Model.ResultId) {
+                                            <li><strong>@Html.ActionLink(he.When.ToString("MMMM d, yyyy") + " at " + he.When.ToString("HH:mm:ss"), "Results", "Dashboard", new { id = Model.SiteId, rid = he.HistoryId }) (selected)</strong></li>
+                                        } else {
+                                            <li>@Html.ActionLink(he.When.ToString("MMMM d, yyyy") + " at " + he.When.ToString("HH:mm:ss"), "Results", "Dashboard", new { id = Model.SiteId, rid = he.HistoryId }) @Html.ActionLink("[delete]", "DeleteResults", "Dashboard", new { id = Model.SiteId, did = he.HistoryId, rid = Model.ResultId }, new { onclick = "return deleteResultConfirm();", @class = "text-danger" })</li>
+                                        }
                                     }
                                 </ul>
                             </div>
@@ -513,18 +592,60 @@
         }
     </style>
     <link href="/plugins/bootstrap4-toggle/css/bootstrap4-toggle.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/plugins/bootstrap-select/css/bootstrap-select.min.css">
+    <style>
+        #ElementsFilter .bootstrap-select .dropdown-menu li a {
+            color: darkgray;
+        }
+        #ElementsFilter .bootstrap-select .dropdown-menu li .selected {
+            color: black;
+        }
+        .od {
+            padding: 5px 0;
+        }
+    </style>
 }
 @section Scripts {
     <script src="/plugins/bootstrap4-toggle/js/bootstrap4-toggle.min.js"></script>
+    <script src="/plugins/bootstrap-select/js/bootstrap-select.min.js"></script>
     <script>
         loadedLog = false;
+        loadedAttacks = false;
         function showLog() {
             if (!loadedLog) {
                 tab = $("#custom-tabs-three-log");
                 tab.load(tab.attr('data-target'));
                 loadedLog = true;
             }
-
+        }
+        function showAttacks() {
+            if (!loadedAttacks) {
+                tab = $("#custom-tabs-three-attacks");
+                tab.load(tab.attr('data-target'));
+                loadedAttacks = true;
+            }
+        }
+    </script>
+    <script>
+        $(document).ready(function () {
+            $('#includeSettings').change(function () {
+                checkCaution();
+            });
+            $('#includeLog').change(function () {
+                checkCaution();
+            });
+            function checkCaution() {
+                if ($('#includeSettings').is(':checked') || $('#includeLog').is(':checked')) {
+                    $('#cautionLabel').show();
+                } else {
+                    $('#cautionLabel').hide();
+                }
+            }
+        });
+    </script>
+    <script>
+        function deleteResultConfirm() {
+            return confirm("Are you sure you want to delete this set of results? Deleting data cannot be undone.");
         }
     </script>
 }

@@ -1,4 +1,7 @@
-﻿using OAuch.Shared.Enumerations;
+﻿using OAuch.Compliance.Tests.AuthEndpoint;
+using OAuch.Compliance.Tests.Pkce;
+using OAuch.Compliance.Tests.TokenEndpoint;
+using OAuch.Shared.Enumerations;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -146,7 +149,9 @@ namespace OAuch.Compliance {
                                       MitigatedBy = new List<TestCombination> {
                                           new TestCombination {
                                               Tests["OAuch.Compliance.Tests.AuthEndpoint.RedirectUriPathMatchedTest"],
-                                              Tests["OAuch.Compliance.Tests.AuthEndpoint.RedirectUriFullyMatchedTest"]
+                                              Tests["OAuch.Compliance.Tests.AuthEndpoint.RedirectUriFullyMatchedTest"],
+                                              Tests["OAuch.Compliance.Tests.AuthEndpoint.RedirectUriConfusionTest"],
+                                              Tests["OAuch.Compliance.Tests.AuthEndpoint.CodePollutionTest"]
                                           }
                                       }
                                 }
@@ -155,7 +160,7 @@ namespace OAuch.Compliance {
                         new Threat {
                             Id = "6819_4_2_1",
                             Title = "Password Phishing by Counterfeit Authorization Server",
-                            Description = "Auth makes no attempt to verify the authenticity of the authorization server. A hostile party could take advantage of this by intercepting the client's requests and returning misleading or otherwise incorrect responses. This could be achieved using DNS or Address Resolution Protocol (ARP) spoofing.  Wide deployment of OAuth and similar protocols may cause users to become inured to the practice of being redirected to web sites where they are asked to enter their passwords. If users are not careful to verify the authenticity of these web sites before entering their credentials, it will be possible for attackers to exploit this practice to steal users' passwords.",
+                            Description = "OAuth makes no attempt to verify the authenticity of the authorization server. A hostile party could take advantage of this by intercepting the client's requests and returning misleading or otherwise incorrect responses. This could be achieved using DNS or Address Resolution Protocol (ARP) spoofing.  Wide deployment of OAuth and similar protocols may cause users to become inured to the practice of being redirected to web sites where they are asked to enter their passwords. If users are not careful to verify the authenticity of these web sites before entering their credentials, it will be possible for attackers to exploit this practice to steal users' passwords.",
                             Document = Documents["RFC6819"],
                             LocationInDocument = "4.2.1.",
                             Instances = new List<ThreatInstance> {
@@ -207,7 +212,9 @@ namespace OAuch.Compliance {
                                           },
                                           new TestCombination {
                                               Tests["OAuch.Compliance.Tests.AuthEndpoint.RedirectUriPathMatchedTest"],
-                                              Tests["OAuch.Compliance.Tests.AuthEndpoint.RedirectUriFullyMatchedTest"]
+                                              Tests["OAuch.Compliance.Tests.AuthEndpoint.RedirectUriFullyMatchedTest"],
+                                              Tests["OAuch.Compliance.Tests.AuthEndpoint.RedirectUriConfusionTest"],
+                                              Tests["OAuch.Compliance.Tests.AuthEndpoint.CodePollutionTest"]
                                           }
                                       }
                                 }
@@ -236,6 +243,8 @@ namespace OAuch.Compliance {
                                           new TestCombination {
                                               Tests["OAuch.Compliance.Tests.AuthEndpoint.RedirectUriPathMatchedTest"],
                                               Tests["OAuch.Compliance.Tests.AuthEndpoint.RedirectUriFullyMatchedTest"],
+                                              Tests["OAuch.Compliance.Tests.AuthEndpoint.RedirectUriConfusionTest"],
+                                              Tests["OAuch.Compliance.Tests.AuthEndpoint.CodePollutionTest"],
                                               Tests["OAuch.Compliance.Tests.AuthEndpoint.InvalidRedirectTest"] // BCP 4.10.2
                                           }
                                       }
@@ -346,7 +355,8 @@ namespace OAuch.Compliance {
                                               Tests["OAuch.Compliance.Tests.TokenEndpoint.IsCodeBoundToClientTest"],
                                               Tests["OAuch.Compliance.Tests.TokenEndpoint.AuthorizationCodeTimeoutTest"],
                                               Tests["OAuch.Compliance.Tests.TokenEndpoint.MultipleCodeExchangesTest"],
-                                              Tests["OAuch.Compliance.Tests.TokenEndpoint.TokenValidAfterMultiExchangeTest"]
+                                              Tests["OAuch.Compliance.Tests.TokenEndpoint.TokenValidAfterMultiExchangeTest"],
+                                              Tests["OAuch.Compliance.Tests.TokenEndpoint.RefreshTokenValidAfterMultiExchangeTest"]
                                           }
                                       }
                                 }
@@ -426,6 +436,8 @@ namespace OAuch.Compliance {
                                           new TestCombination {
                                               Tests["OAuch.Compliance.Tests.AuthEndpoint.RedirectUriPathMatchedTest"],
                                               Tests["OAuch.Compliance.Tests.AuthEndpoint.RedirectUriFullyMatchedTest"],
+                                              Tests["OAuch.Compliance.Tests.AuthEndpoint.RedirectUriConfusionTest"],
+                                              Tests["OAuch.Compliance.Tests.AuthEndpoint.CodePollutionTest"],
                                               Tests["OAuch.Compliance.Tests.TokenEndpoint.RedirectUriCheckedTest"]
                                           }
                                       }
@@ -436,7 +448,7 @@ namespace OAuch.Compliance {
                             Id = "6819_4_4_1_8",
                             Title = "CSRF Attack against redirect-uri",
                             Description = "Cross-site request forgery (CSRF) is a web-based attack whereby HTTP requests are transmitted from a user that the web site trusts or has authenticated. CSRF attacks on OAuth approvals can allow an attacker to obtain authorization to OAuth protected resources without the consent of the user.",
-                            Document = Documents["SecBCP"],
+                            Document = Documents["RFC6819"],
                             LocationInDocument = "4.4.1.8.",
                             Instances = new List<ThreatInstance> {
                                 new ThreatInstance {
@@ -816,7 +828,36 @@ namespace OAuch.Compliance {
                             }
                         },
                         new Threat {
+                            Id = "BCP_4_1_1",
+                            AliasOf = "6819_4_1_5",
+                            Title = "Redirect URI Validation Attacks on Authorization Code Grant",
+                            Description = "Some authorization servers allow clients to register redirect URI patterns instead of complete redirect URIs. This approach turned out to be more complex to implement and more error prone to manage than exact redirect URI matching. Several successful attacks exploiting flaws in the pattern matching implementation or concrete configurations have been observed in the wild.",
+                            Document = Documents["SecBCP"],
+                            LocationInDocument = "4.1.1.",
+                            Instances = new List<ThreatInstance> {
+                                new ThreatInstance {
+                                     ExtraDescription = null,
+                                      DependsOnFeatures = new List<Test>{
+                                          Tests["OAuch.Compliance.Tests.Features.CodeFlowSupportedTest"],
+                                          Tests["OAuch.Compliance.Tests.Features.CodeTokenFlowSupportedTest"],
+                                          Tests["OAuch.Compliance.Tests.Features.CodeIdTokenFlowSupportedTest"],
+                                          Tests["OAuch.Compliance.Tests.Features.CodeIdTokenTokenFlowSupportedTest"]
+                                      },
+                                      MitigatedBy = new List<TestCombination> {
+                                          new TestCombination {
+                                              Tests["OAuch.Compliance.Tests.AuthEndpoint.RedirectUriFullyMatchedTest"]
+                                          },
+                                          new TestCombination {
+                                              Tests["OAuch.Compliance.Tests.AuthEndpoint.RedirectUriPathMatchedTest"],
+                                              Tests["OAuch.Compliance.Tests.AuthEndpoint.RedirectUriConfusionTest"],
+                                          }
+                                      }
+                                }
+                            }
+                        },
+                        new Threat {
                             Id = "BCP_4_1_2",
+                            AliasOf = "6819_4_1_5",
                             Title = "Redirect URI Validation Attacks on Implicit Grant",
                             Description = "Implicit clients can be subject to an attack that utilizes the fact that user agents re-attach fragments to the destination URL of a redirect if the location header does not contain a fragment. This allows circumvention even of very narrow redirect URI patterns, but not strict URL matching.",
                             Document = Documents["SecBCP"],
@@ -826,6 +867,9 @@ namespace OAuch.Compliance {
                                      ExtraDescription = null,
                                       DependsOnFeatures = new List<Test>{
                                           Tests["OAuch.Compliance.Tests.Features.TokenFlowSupportedTest"],
+                                          Tests["OAuch.Compliance.Tests.Features.IdTokenTokenFlowSupportedTest"],
+                                          Tests["OAuch.Compliance.Tests.Features.CodeIdTokenFlowSupportedTest"],
+                                          Tests["OAuch.Compliance.Tests.Features.CodeIdTokenTokenFlowSupportedTest"],
                                       },
                                       MitigatedBy = new List<TestCombination> {
                                           new TestCombination {
@@ -833,6 +877,7 @@ namespace OAuch.Compliance {
                                           },
                                           new TestCombination {
                                               Tests["OAuch.Compliance.Tests.AuthEndpoint.RedirectUriPathMatchedTest"],
+                                              Tests["OAuch.Compliance.Tests.AuthEndpoint.RedirectUriConfusionTest"],
                                               Tests["OAuch.Compliance.Tests.AuthEndpoint.FragmentFixTest"]
                                           }
                                       }
@@ -842,14 +887,13 @@ namespace OAuch.Compliance {
                         new Threat {
                             Id = "BCP_4_2_2",
                             Title = "Leakage from the Authorization Server ",
-                            Description = "An attacker can learn 'state' from the authorization request if the authorization endpoint at the authorization server contains links or third-party content.",
+                            Description = "An attacker can learn state from the authorization request if the authorization endpoint at the authorization server contains links or third-party content.",
                             Document = Documents["SecBCP"],
                             LocationInDocument = "4.2.2.",
                             Instances = new List<ThreatInstance> {
                                 new ThreatInstance {
                                      ExtraDescription = null,
                                       DependsOnFeatures = new List<Test>{
-                                          /* Depends on one of the flows that uses the authorization endpoint */
                                           Tests["OAuch.Compliance.Tests.Features.CodeFlowSupportedTest"],
                                           Tests["OAuch.Compliance.Tests.Features.CodeTokenFlowSupportedTest"],
                                           Tests["OAuch.Compliance.Tests.Features.CodeIdTokenFlowSupportedTest"],
@@ -863,6 +907,7 @@ namespace OAuch.Compliance {
                                               Tests["OAuch.Compliance.Tests.TokenEndpoint.IsCodeBoundToClientTest"],
                                               Tests["OAuch.Compliance.Tests.TokenEndpoint.MultipleCodeExchangesTest"],
                                               Tests["OAuch.Compliance.Tests.TokenEndpoint.TokenValidAfterMultiExchangeTest"],
+                                              Tests["OAuch.Compliance.Tests.TokenEndpoint.RefreshTokenValidAfterMultiExchangeTest"]
                                           },
                                           new TestCombination {
                                               Tests["OAuch.Compliance.Tests.AuthEndpoint.ReferrerPolicyEnforcedTest"],
@@ -902,6 +947,48 @@ namespace OAuch.Compliance {
                             }
                         },
                         new Threat {
+                            Id = "BCP_4_3_2_A",
+                            AliasOf = "6819_4_6_7",
+                            Title = "Access Token in Browser History (Leaking API Request)",
+                            Description = "An access token may end up in the browser history if a client or a web site that already has a token deliberately navigates to a page like provider.com/get_user_profile?access_token=abcdef.",
+                            Document = Documents["SecBCP"],
+                            LocationInDocument = "4.3.2.",
+                            Instances = new List<ThreatInstance> {
+                                new ThreatInstance {
+                                     ExtraDescription = null,
+                                      DependsOnFeatures = new List<Test>{
+                                          Tests["OAuch.Compliance.Tests.Features.TestUriSupportedTest"]
+                                      },
+                                      MitigatedBy = new List<TestCombination> {
+                                          new TestCombination {
+                                              Tests["OAuch.Compliance.Tests.ApiEndpoint.TokenAsQueryParameterDisabledTest"]
+                                          }
+                                      }
+                                }
+                            }
+                        },
+                        new Threat {
+                            Id = "BCP_4_3_2_B",
+                            Title = "Access Token in Browser History (Implicit Grant)",
+                            Description = "In the implicit grant, a URL like client.example/redirection_endpoint#access_token=abcdef may end up in the browser history as a result of a redirect from a provider's authorization endpoint.",
+                            Document = Documents["SecBCP"],
+                            LocationInDocument = "4.3.2.",
+                            Instances = new List<ThreatInstance> {
+                                new ThreatInstance {
+                                     ExtraDescription = null,
+                                      DependsOnFeatures = new List<Test>{
+                                          Tests["OAuch.Compliance.Tests.Features.CodeTokenFlowSupportedTest"],
+                                          Tests["OAuch.Compliance.Tests.Features.CodeIdTokenTokenFlowSupportedTest"],
+                                          Tests["OAuch.Compliance.Tests.Features.TokenFlowSupportedTest"],
+                                          Tests["OAuch.Compliance.Tests.Features.IdTokenTokenFlowSupportedTest"],
+                                      },
+                                      MitigatedBy = new List<TestCombination> {
+                                          // cannot be mitigated
+                                      }
+                                }
+                            }
+                        },
+                        new Threat {
                             Id = "BCP_4_5",
                             Title = "Authorization Code Injection",
                             Description = "In an authorization code injection attack, the attacker attempts to inject a stolen authorization code into the attacker's own session with the client. The aim is to associate the attacker's session at the client with the victim's resources or identity.",
@@ -924,6 +1011,36 @@ namespace OAuch.Compliance {
                             }
                         },
                         new Threat {
+                            Id = "BCP_4_7",
+                            AliasOf = "6819_4_4_1_8",
+                            Title = "Cross Site Request Forgery",
+                            Description = "An attacker might attempt to inject a request to the redirect URI of the legitimate client on the victim's device, e.g., to cause the client to access resources under the attacker's control. This is a variant of an attack known as Cross-Site Request Forgery (CSRF).",
+                            Document = Documents["SecBCP"],
+                            LocationInDocument = "4.7.",
+                            Instances = new List<ThreatInstance> {
+                                new ThreatInstance {
+                                     ExtraDescription = null,
+                                      DependsOnFeatures = new List<Test>{
+                                          Tests["OAuch.Compliance.Tests.Features.CodeFlowSupportedTest"],
+                                          Tests["OAuch.Compliance.Tests.Features.CodeTokenFlowSupportedTest"],
+                                          Tests["OAuch.Compliance.Tests.Features.CodeIdTokenFlowSupportedTest"],
+                                          Tests["OAuch.Compliance.Tests.Features.CodeIdTokenTokenFlowSupportedTest"],
+                                          Tests["OAuch.Compliance.Tests.Features.TokenFlowSupportedTest"],
+                                          Tests["OAuch.Compliance.Tests.Features.IdTokenTokenFlowSupportedTest"],
+                                          Tests["OAuch.Compliance.Tests.Features.IdTokenFlowSupportedTest"],
+                                      },
+                                      MitigatedBy = new List<TestCombination> {
+                                          new TestCombination {
+                                            Tests["OAuch.Compliance.Tests.Pkce.IsPkceRequiredTest"]
+                                          },
+                                          new TestCombination {
+                                            Tests["OAuch.Compliance.Tests.IdTokens.NoncePresentInTokenTest"]
+                                          }
+                                      }
+                                }
+                            }
+                        },
+                        new Threat {
                             Id = "BCP_4_8",
                             Title = "PKCE Downgrade Attack",
                             Description = "An authorization server that supports PKCE but does not make its use mandatory for all flows can be susceptible to a PKCE downgrade attack.",
@@ -938,7 +1055,187 @@ namespace OAuch.Compliance {
                                       MitigatedBy = new List<TestCombination> {
                                           new TestCombination {
                                               Tests["OAuch.Compliance.Tests.Pkce.IsPkceDowngradeDetectedTest"],
-                                              Tests["OAuch.Compliance.Tests.Pkce.IsPkcePlainDowngradeDetectedTest"]
+                                              Tests["OAuch.Compliance.Tests.Pkce.IsPkcePlainDowngradeDetectedTest"],
+                                              Tests["OAuch.Compliance.Tests.Pkce.IsPkceTokenDowngradeDetectedTest"]
+                                          }
+                                      }
+                                }
+                            }
+                        },
+
+
+                        new Threat {
+                            Id = "BCP_4_10",
+                            Title = "Misuse of Stolen Access Tokens",
+                            Description = "Access tokens can be stolen by an attacker in various ways. Authorization servers therefore SHOULD ensure that access tokens are sender-constrained and audience-restricted.",
+                            Document = Documents["SecBCP"],
+                            LocationInDocument = "4.10.",
+                            Instances = new List<ThreatInstance> {
+                                new ThreatInstance {
+                                     ExtraDescription = null,
+                                      DependsOnFeatures = new List<Test>{
+                                          Tests["OAuch.Compliance.Tests.Features.CodeFlowSupportedTest"],
+                                          Tests["OAuch.Compliance.Tests.Features.CodeTokenFlowSupportedTest"],
+                                          Tests["OAuch.Compliance.Tests.Features.CodeIdTokenFlowSupportedTest"],
+                                          Tests["OAuch.Compliance.Tests.Features.CodeIdTokenTokenFlowSupportedTest"],
+                                          Tests["OAuch.Compliance.Tests.Features.TokenFlowSupportedTest"],
+                                          Tests["OAuch.Compliance.Tests.Features.IdTokenTokenFlowSupportedTest"],
+                                          Tests["OAuch.Compliance.Tests.Features.IdTokenFlowSupportedTest"],
+                                          Tests["OAuch.Compliance.Tests.Features.ClientCredentialsFlowSupportedTest"],
+                                          Tests["OAuch.Compliance.Tests.Features.PasswordFlowSupportedTest"],
+                                      },
+                                      MitigatedBy = new List<TestCombination> {
+                                          new TestCombination {
+                                              Tests["OAuch.Compliance.Tests.ApiEndpoint.AreBearerTokensDisabledTest"],
+                                          }
+                                      }
+                                }
+                            }
+                        },
+                        new Threat {
+                            Id = "BCP_4_11_1",
+                            AliasOf = "6819_4_1_5",
+                            Title = "Client as Open Redirector",
+                            Description = "An open redirector is an endpoint using a parameter to automatically redirect a user agent to the location specified by the parameter value without any validation.  If the authorization server allows the client to register only part of the redirect URI, an attacker can use an open redirector operated by the client to construct a redirect URI that will pass the authorization server validation but will send the authorization 'code' or access token to an endpoint under the control of the attacker.",
+                            Document = Documents["SecBCP"],
+                            LocationInDocument = "4.11.1.",
+                            Instances = new List<ThreatInstance> {
+                                new ThreatInstance {
+                                     ExtraDescription = null,
+                                      DependsOnFeatures = new List<Test>{
+                                          /* Depends on one of the flows that uses the authorization endpoint */
+                                          Tests["OAuch.Compliance.Tests.Features.CodeFlowSupportedTest"],
+                                          Tests["OAuch.Compliance.Tests.Features.CodeTokenFlowSupportedTest"],
+                                          Tests["OAuch.Compliance.Tests.Features.CodeIdTokenFlowSupportedTest"],
+                                          Tests["OAuch.Compliance.Tests.Features.CodeIdTokenTokenFlowSupportedTest"],
+                                          Tests["OAuch.Compliance.Tests.Features.TokenFlowSupportedTest"],
+                                          Tests["OAuch.Compliance.Tests.Features.IdTokenTokenFlowSupportedTest"],
+                                          Tests["OAuch.Compliance.Tests.Features.IdTokenFlowSupportedTest"],
+                                      },
+                                      MitigatedBy = new List<TestCombination> {
+                                          new TestCombination {
+                                              Tests["OAuch.Compliance.Tests.AuthEndpoint.RedirectUriPathMatchedTest"],
+                                              Tests["OAuch.Compliance.Tests.AuthEndpoint.RedirectUriFullyMatchedTest"],
+                                              Tests["OAuch.Compliance.Tests.AuthEndpoint.RedirectUriConfusionTest"],
+                                              Tests["OAuch.Compliance.Tests.AuthEndpoint.CodePollutionTest"]
+                                          }
+                                      }
+                                }
+                            }
+                        },
+                        new Threat {
+                            Id = "BCP_4_11_2",
+                            AliasOf = "6819_4_2_4",
+                            Title = "Authorization Server as Open Redirector",
+                            Description = "An attacker could use the end-user authorization endpoint and the redirect URI parameter to abuse the authorization server as an open redirector. An open redirector is an endpoint using a parameter to automatically redirect a user agent to the location specified by the parameter value without any validation. An attacker could utilize a user's trust in an authorization server to launch a phishing attack.",
+                            Document = Documents["SecBCP"],
+                            LocationInDocument = "4.11.2.",
+                            Instances = new List<ThreatInstance> {
+                                new ThreatInstance {
+                                     ExtraDescription = null,
+                                      DependsOnFeatures = new List<Test>{
+                                          /* Depends on one of the flows that uses the authorization endpoint */
+                                          Tests["OAuch.Compliance.Tests.Features.CodeFlowSupportedTest"],
+                                          Tests["OAuch.Compliance.Tests.Features.CodeTokenFlowSupportedTest"],
+                                          Tests["OAuch.Compliance.Tests.Features.CodeIdTokenFlowSupportedTest"],
+                                          Tests["OAuch.Compliance.Tests.Features.CodeIdTokenTokenFlowSupportedTest"],
+                                          Tests["OAuch.Compliance.Tests.Features.TokenFlowSupportedTest"],
+                                          Tests["OAuch.Compliance.Tests.Features.IdTokenTokenFlowSupportedTest"],
+                                          Tests["OAuch.Compliance.Tests.Features.IdTokenFlowSupportedTest"],
+                                      },
+                                      MitigatedBy = new List<TestCombination> {
+                                          new TestCombination {
+                                              Tests["OAuch.Compliance.Tests.AuthEndpoint.RedirectUriPathMatchedTest"],
+                                              Tests["OAuch.Compliance.Tests.AuthEndpoint.RedirectUriFullyMatchedTest"],
+                                              Tests["OAuch.Compliance.Tests.AuthEndpoint.RedirectUriConfusionTest"],
+                                              Tests["OAuch.Compliance.Tests.AuthEndpoint.CodePollutionTest"],
+                                              Tests["OAuch.Compliance.Tests.AuthEndpoint.InvalidRedirectTest"] // BCP 4.11.2
+                                          }
+                                      }
+                                }
+                            }
+                        },
+                        new Threat {
+                            Id = "BCP_4_14",
+                            Title = "Refresh Token Protection",
+                            Description = "Refresh tokens are an attractive target for attackers, since they represent the overall grant a resource owner delegated to a certain client. If an attacker is able to exfiltrate and successfully replay a refresh token, the attacker will be able to mint access tokens and use them to access resource servers on behalf of the resource owner.",
+                            Document = Documents["SecBCP"],
+                            LocationInDocument = "4.14.",
+                            Instances = new List<ThreatInstance> {
+                                new ThreatInstance {
+                                     ExtraDescription = null,
+                                      DependsOnFeatures = new List<Test>{
+                                            Tests["OAuch.Compliance.Tests.Features.HasRefreshTokensTest"]
+                                      },
+                                      MitigatedBy = new List<TestCombination> {
+                                          new TestCombination {
+                                              Tests["OAuch.Compliance.Tests.TokenEndpoint.UsesTokenRotationTest"],
+                                              Tests["OAuch.Compliance.Tests.TokenEndpoint.InvalidatedRefreshTokenTest"],
+                                              Tests["OAuch.Compliance.Tests.TokenEndpoint.RefreshTokenRevokedAfterUseTest"],
+                                              Tests["OAuch.Compliance.Tests.TokenEndpoint.IsRefreshBoundToClientTest"],
+                                              Tests["OAuch.Compliance.Tests.TokenEndpoint.IsRefreshAuthenticationRequiredTest"],
+                                              Tests["OAuch.Compliance.Tests.Tokens.RefreshTokenEntropyMinReqTest"],
+                                              Tests["OAuch.Compliance.Tests.Tokens.RefreshTokenEntropySugReqTest"],
+                                              Tests["OAuch.Compliance.Tests.TokenEndpoint.IsModernTlsSupportedTest"],
+                                              Tests["OAuch.Compliance.Tests.TokenEndpoint.IsHttpsRequiredTest"],
+                                              Tests["OAuch.Compliance.Tests.TokenEndpoint.HasValidCertificateTest"],
+                                          }
+                                      }
+                                }
+                            }
+                        },
+                        new Threat {
+                            Id = "BCP_4_16",
+                            AliasOf = "6819_4_4_1_9",
+                            Title = "Clickjacking",
+                            Description = "The authorization request is susceptible to clickjacking attacks, also called user interface redressing. An attacker can use this vector to obtain the user's authentication credentials, change the scope of access granted to the client, and potentially access the user's resources.",
+                            Document = Documents["SecBCP"],
+                            LocationInDocument = "4.16.",
+                            Instances = new List<ThreatInstance> {
+                                new ThreatInstance {
+                                     ExtraDescription = null,
+                                      DependsOnFeatures = new List<Test>{
+                                          /* Depends on one of the flows that uses the authorization endpoint */
+                                          Tests["OAuch.Compliance.Tests.Features.CodeFlowSupportedTest"],
+                                          Tests["OAuch.Compliance.Tests.Features.CodeTokenFlowSupportedTest"],
+                                          Tests["OAuch.Compliance.Tests.Features.CodeIdTokenFlowSupportedTest"],
+                                          Tests["OAuch.Compliance.Tests.Features.CodeIdTokenTokenFlowSupportedTest"],
+                                          Tests["OAuch.Compliance.Tests.Features.TokenFlowSupportedTest"],
+                                          Tests["OAuch.Compliance.Tests.Features.IdTokenTokenFlowSupportedTest"],
+                                          Tests["OAuch.Compliance.Tests.Features.IdTokenFlowSupportedTest"],
+                                      },
+                                      MitigatedBy = new List<TestCombination> {
+                                          new TestCombination {
+                                              Tests["OAuch.Compliance.Tests.AuthEndpoint.HasFrameOptionsTest"],
+                                              Tests["OAuch.Compliance.Tests.AuthEndpoint.HasContentSecurityPolicyTest"]
+                                          }
+                                      }
+                                }
+                            }
+                        },
+                        new Threat {
+                            Id = "BCP_4_17",
+                            Title = "Authorization Server Redirecting to Phishing Site",
+                            Description = "An attacker could utilize a correctly registered redirect URI to perform phishing attacks. The authorization server SHOULD only automatically redirect the user agent if it trusts the redirect URI. If the URI is not trusted, the authorization server MAY inform the user and rely on the user to make the correct decision.",
+                            Document = Documents["SecBCP"],
+                            LocationInDocument = "4.17.",
+                            Instances = new List<ThreatInstance> {
+                                new ThreatInstance {
+                                     ExtraDescription = null,
+                                      DependsOnFeatures = new List<Test>{
+                                          /* Depends on one of the flows that uses the authorization endpoint */
+                                          Tests["OAuch.Compliance.Tests.Features.CodeFlowSupportedTest"],
+                                          Tests["OAuch.Compliance.Tests.Features.CodeTokenFlowSupportedTest"],
+                                          Tests["OAuch.Compliance.Tests.Features.CodeIdTokenFlowSupportedTest"],
+                                          Tests["OAuch.Compliance.Tests.Features.CodeIdTokenTokenFlowSupportedTest"],
+                                          Tests["OAuch.Compliance.Tests.Features.TokenFlowSupportedTest"],
+                                          Tests["OAuch.Compliance.Tests.Features.IdTokenTokenFlowSupportedTest"],
+                                          Tests["OAuch.Compliance.Tests.Features.IdTokenFlowSupportedTest"],
+                                      },
+                                      MitigatedBy = new List<TestCombination> {
+                                          new TestCombination {
+                                              Tests["OAuch.Compliance.Tests.AuthEndpoint.AutomaticRedirectInvalidScopeTest"],
+                                              Tests["OAuch.Compliance.Tests.AuthEndpoint.AutomaticRedirectInvalidResponseTypeTest"]
                                           }
                                       }
                                 }
@@ -1175,7 +1472,17 @@ namespace OAuch.Compliance {
                                      LocationInDocument = "3.1.2.2. Registration Requirements"
                                  },
                                  new TestRequirementLevel {
+                                     Test  = Tests["OAuch.Compliance.Tests.AuthEndpoint.CodePollutionTest"],
+                                     RequirementLevel = RequirementLevels.Should,
+                                     LocationInDocument = "3.1.2.2. Registration Requirements"
+                                 },
+                                 new TestRequirementLevel {
                                      Test  = Tests["OAuch.Compliance.Tests.AuthEndpoint.RedirectUriPathMatchedTest"],
+                                     RequirementLevel = RequirementLevels.Should,
+                                     LocationInDocument = "3.1.2.2. Registration Requirements"
+                                 },
+                                 new TestRequirementLevel {
+                                     Test  = Tests["OAuch.Compliance.Tests.AuthEndpoint.RedirectUriConfusionTest"],
                                      RequirementLevel = RequirementLevels.Should,
                                      LocationInDocument = "3.1.2.2. Registration Requirements"
                                  },
@@ -1257,6 +1564,11 @@ namespace OAuch.Compliance {
                                  },
                                  new TestRequirementLevel {
                                      Test  = Tests["OAuch.Compliance.Tests.TokenEndpoint.TokenValidAfterMultiExchangeTest"],
+                                     RequirementLevel = RequirementLevels.Should,
+                                     LocationInDocument = "4.1.2. Authorization Response"
+                                 },
+                                 new TestRequirementLevel {
+                                     Test  = Tests["OAuch.Compliance.Tests.TokenEndpoint.RefreshTokenValidAfterMultiExchangeTest"],
                                      RequirementLevel = RequirementLevels.Should,
                                      LocationInDocument = "4.1.2. Authorization Response"
                                  },
@@ -1554,6 +1866,11 @@ namespace OAuch.Compliance {
                                      LocationInDocument = "4.4. Server Returns the Code"
                                  },
                                  new TestRequirementLevel {
+                                     Test  = Tests["OAuch.Compliance.Tests.Pkce.IsPkceTokenDowngradeDetectedTest"],
+                                     RequirementLevel = RequirementLevels.Must,
+                                     LocationInDocument = "4.4. Server Returns the Code"
+                                 },
+                                 new TestRequirementLevel {
                                      Test  = Tests["OAuch.Compliance.Tests.Pkce.IsPkcePlainDowngradeDetectedTest"],
                                      RequirementLevel = RequirementLevels.Must,
                                      LocationInDocument = "4.4. Server Returns the Code"
@@ -1689,6 +2006,11 @@ namespace OAuch.Compliance {
                                      LocationInDocument = "5.2.1.1. Automatic Revocation of Derived Tokens If Abuse Is Detected"
                                  },
                                  new TestRequirementLevel {
+                                     Test  = Tests["OAuch.Compliance.Tests.TokenEndpoint.RefreshTokenValidAfterMultiExchangeTest"],
+                                     RequirementLevel = RequirementLevels.May,
+                                     LocationInDocument = "5.2.1.1. Automatic Revocation of Derived Tokens If Abuse Is Detected"
+                                 },
+                                 new TestRequirementLevel {
                                      Test  = Tests["OAuch.Compliance.Tests.TokenEndpoint.IsRefreshAuthenticationRequiredTest"],
                                      RequirementLevel = RequirementLevels.Should,
                                      LocationInDocument = "5.2.2.2. Binding of Refresh Token to 'client_id'"
@@ -1724,7 +2046,17 @@ namespace OAuch.Compliance {
                                      LocationInDocument = "5.2.3.3.  Issue a 'client_id' Only in Combination with 'redirect_uri'"
                                  },
                                  new TestRequirementLevel {
+                                     Test  = Tests["OAuch.Compliance.Tests.AuthEndpoint.CodePollutionTest"],
+                                     RequirementLevel = RequirementLevels.Should,
+                                     LocationInDocument = "5.2.3.3.  Issue a 'client_id' Only in Combination with 'redirect_uri'"
+                                 },
+                                 new TestRequirementLevel {
                                      Test  = Tests["OAuch.Compliance.Tests.AuthEndpoint.RedirectUriPathMatchedTest"],
+                                     RequirementLevel = RequirementLevels.Should,
+                                     LocationInDocument = "5.2.3.3.  Issue a 'client_id' Only in Combination with 'redirect_uri'"
+                                 },
+                                 new TestRequirementLevel {
+                                     Test  = Tests["OAuch.Compliance.Tests.AuthEndpoint.RedirectUriConfusionTest"],
                                      RequirementLevel = RequirementLevels.Should,
                                      LocationInDocument = "5.2.3.3.  Issue a 'client_id' Only in Combination with 'redirect_uri'"
                                  },
@@ -1902,7 +2234,7 @@ namespace OAuch.Compliance {
                         //},
                         new OAuthDocument {
                             Id = "SecBCP",
-                            Name = "OAuth 2.0 Security Best Current Practice", /* draft 15 or 16 */
+                            Name = "OAuth 2.0 Security Best Current Practice (draft 25)",
                             Description = "This document describes best current security practice for OAuth 2.0. It updates and extends the OAuth 2.0 Security Threat Model to incorporate practical experiences gathered since OAuth 2.0 was published and covers new threats relevant due to the broader application of OAuth 2.0.",
                             Url = "https://tools.ietf.org/html/draft-ietf-oauth-security-topics",
                             IsSupportedTest = "OAuch.Compliance.Tests.DocumentSupport.RFC6749SupportedTest",
@@ -1952,12 +2284,22 @@ namespace OAuch.Compliance {
                                      LocationInDocument = "2.1.  Protecting Redirect-Based Flows"
                                  },
                                  new TestRequirementLevel {
+                                     Test  = Tests["OAuch.Compliance.Tests.AuthEndpoint.CodePollutionTest"],
+                                     RequirementLevel = RequirementLevels.Must,
+                                     LocationInDocument = "2.1.  Protecting Redirect-Based Flows"
+                                 },
+                                 new TestRequirementLevel {
                                      Test  = Tests["OAuch.Compliance.Tests.Pkce.IsPkceImplementedTest"],
                                      RequirementLevel = RequirementLevels.Must,
                                      LocationInDocument = "2.1.1. Authorization Code Grant"
                                  },
                                  new TestRequirementLevel {
                                      Test  = Tests["OAuch.Compliance.Tests.Pkce.IsPkceDowngradeDetectedTest"],
+                                     RequirementLevel = RequirementLevels.Must,
+                                     LocationInDocument = "2.1.1. Authorization Code Grant"
+                                 },
+                                 new TestRequirementLevel {
+                                     Test  = Tests["OAuch.Compliance.Tests.Pkce.IsPkceTokenDowngradeDetectedTest"],
                                      RequirementLevel = RequirementLevels.Must,
                                      LocationInDocument = "2.1.1. Authorization Code Grant"
                                  },
@@ -1987,7 +2329,17 @@ namespace OAuch.Compliance {
                                      LocationInDocument = "2.2.1. Access Tokens"
                                  },
                                  new TestRequirementLevel {
+                                     Test  = Tests["OAuch.Compliance.Tests.ApiEndpoint.AreBearerTokensDisabledTest"],
+                                     RequirementLevel = RequirementLevels.Should,
+                                     LocationInDocument = "2.2.1. Access Tokens"
+                                 },
+                                 new TestRequirementLevel {
                                      Test  = Tests["OAuch.Compliance.Tests.TokenEndpoint.UsesTokenRotationTest"],
+                                     RequirementLevel = RequirementLevels.Must,
+                                     LocationInDocument = "2.2.2. Refresh Tokens"
+                                 },
+                                 new TestRequirementLevel { 
+                                     Test = Tests["OAuch.Compliance.Tests.TokenEndpoint.IsRefreshAuthenticationRequiredTest"],
                                      RequirementLevel = RequirementLevels.Must,
                                      LocationInDocument = "2.2.2. Refresh Tokens"
                                  },
@@ -2027,6 +2379,11 @@ namespace OAuch.Compliance {
                                      LocationInDocument = "4.2.4. Countermeasures"
                                  },
                                  new TestRequirementLevel {
+                                     Test  = Tests["OAuch.Compliance.Tests.TokenEndpoint.RefreshTokenValidAfterMultiExchangeTest"],
+                                     RequirementLevel = RequirementLevels.Should,
+                                     LocationInDocument = "4.2.4. Countermeasures"
+                                 },
+                                 new TestRequirementLevel {
                                      Test  = Tests["OAuch.Compliance.Tests.AuthEndpoint.SupportsPostResponseModeTest"],
                                      RequirementLevel = RequirementLevels.May,
                                      LocationInDocument = "4.2.4. Countermeasures"
@@ -2056,7 +2413,16 @@ namespace OAuch.Compliance {
                                      RequirementLevel = RequirementLevels.Should,
                                      LocationInDocument = "4.15. Clickjacking"
                                  },
-
+                                 new TestRequirementLevel {
+                                     Test  = Tests["OAuch.Compliance.Tests.AuthEndpoint.AutomaticRedirectInvalidScopeTest"],
+                                     RequirementLevel = RequirementLevels.Should,
+                                     LocationInDocument = "4.17. Authorization Server Redirecting to Phishing Site"
+                                 },
+                                 new TestRequirementLevel {
+                                     Test  = Tests["OAuch.Compliance.Tests.AuthEndpoint.AutomaticRedirectInvalidResponseTypeTest"],
+                                     RequirementLevel = RequirementLevels.Should,
+                                     LocationInDocument = "4.17. Authorization Server Redirecting to Phishing Site"
+                                 },                                                                              
                             }
                         },
                         new OAuthDocument {
@@ -2194,6 +2560,302 @@ namespace OAuch.Compliance {
                                      RequirementLevel = RequirementLevels.Must,
                                      LocationInDocument = "2. Form Post Response Mode"
                                 }
+                            }
+                        },
+                        new OAuthDocument {
+                            Id = "FAPI1Base",
+                            Name = "Financial-grade API Security Profile (FAPI) 1.0 – Part 1: Baseline",
+                            Description = "A secured OAuth profile that aims to provide specific implementation guidelines for security and interoperability.",
+                            Url = "https://openid.net/specs/openid-financial-api-part-1-1_0.html",
+                            IsSupportedTest = "OAuch.Compliance.Tests.DocumentSupport.OpenIdSupportedTest",
+                            IsStandard = true,
+                            DocumentCategory = DocumentCategories.OpenIDConnect,
+                            DeprecatedFeatures  = new List<TestRequirementLevel> {
+                                 new TestRequirementLevel {
+                                    Test = Tests["OAuch.Compliance.Tests.Features.IsDeprecatedTlsSupportedTest"],
+                                    RequirementLevel = RequirementLevels.Must,
+                                    LocationInDocument = "7.1. TLS and DNSSEC considerations"
+                                 },
+                                 new TestRequirementLevel {
+                                     Test  = Tests["OAuch.Compliance.Tests.Features.PlainPkceTest"],
+                                     RequirementLevel = RequirementLevels.Must,
+                                     LocationInDocument = "5.2.2. Authorization server"
+                                 },
+
+                            },
+                            Countermeasures= new List<TestRequirementLevel> {
+                                new TestRequirementLevel {
+                                     Test  = Tests["OAuch.Compliance.Tests.AuthEndpoint.HasValidCertificateTest"],
+                                     RequirementLevel = RequirementLevels.Must,
+                                     LocationInDocument = "7.1. TLS and DNSSEC considerations"
+                                },
+                                new TestRequirementLevel {
+                                     Test  = Tests["OAuch.Compliance.Tests.AuthEndpoint.IsHttpsRequiredTest"],
+                                     RequirementLevel = RequirementLevels.Must,
+                                     LocationInDocument = "7.1. TLS and DNSSEC considerations"
+                                },
+                                new TestRequirementLevel {
+                                     Test  = Tests["OAuch.Compliance.Tests.AuthEndpoint.IsModernTlsSupportedTest"],
+                                     RequirementLevel = RequirementLevels.Must,
+                                     LocationInDocument = "7.1. TLS and DNSSEC considerations"
+                                },
+                                new TestRequirementLevel {
+                                     Test  = Tests["OAuch.Compliance.Tests.TokenEndpoint.HasValidCertificateTest"],
+                                     RequirementLevel = RequirementLevels.Must,
+                                     LocationInDocument = "7.1. TLS and DNSSEC considerations"
+                                },
+                                new TestRequirementLevel {
+                                     Test  = Tests["OAuch.Compliance.Tests.TokenEndpoint.IsHttpsRequiredTest"],
+                                     RequirementLevel = RequirementLevels.Must,
+                                     LocationInDocument = "7.1. TLS and DNSSEC considerations"
+                                },
+                                new TestRequirementLevel {
+                                     Test  = Tests["OAuch.Compliance.Tests.TokenEndpoint.IsModernTlsSupportedTest"],
+                                     RequirementLevel = RequirementLevels.Must,
+                                     LocationInDocument = "7.1. TLS and DNSSEC considerations"
+                                },
+                                new TestRequirementLevel {
+                                     Test  = Tests["OAuch.Compliance.Tests.ApiEndpoint.HasValidCertificateTest"],
+                                     RequirementLevel = RequirementLevels.Must,
+                                     LocationInDocument = "7.1. TLS and DNSSEC considerations"
+                                },
+                                new TestRequirementLevel {
+                                     Test  = Tests["OAuch.Compliance.Tests.ApiEndpoint.IsHttpsRequiredTest"],
+                                     RequirementLevel = RequirementLevels.Must,
+                                     LocationInDocument = "7.1. TLS and DNSSEC considerations"
+                                },
+                                new TestRequirementLevel {
+                                     Test  = Tests["OAuch.Compliance.Tests.ApiEndpoint.IsModernTlsSupportedTest"],
+                                     RequirementLevel = RequirementLevels.Must,
+                                     LocationInDocument = "7.1. TLS and DNSSEC considerations"
+                                },
+                                new TestRequirementLevel {
+                                     Test  = Tests["OAuch.Compliance.Tests.Revocation.IsRevocationEndpointSecureTest"],
+                                     RequirementLevel = RequirementLevels.Must,
+                                     LocationInDocument = "7.1. TLS and DNSSEC considerations"
+                                },
+                                new TestRequirementLevel {
+                                     Test  = Tests["OAuch.Compliance.Tests.Revocation.IsModernTlsSupportedTest"],
+                                     RequirementLevel = RequirementLevels.Must,
+                                     LocationInDocument = "7.1. TLS and DNSSEC considerations"
+                                },
+
+                                new TestRequirementLevel {
+                                     Test  = Tests["OAuch.Compliance.Tests.IdTokens.ClientSecretLongEnoughTest"],
+                                     RequirementLevel = RequirementLevels.Must,
+                                     LocationInDocument = "5.2.2. Authorization server"
+                                },
+                                new TestRequirementLevel {
+                                     Test  = Tests["OAuch.Compliance.Tests.IdTokens.SigningKeySecureTest"],
+                                     RequirementLevel = RequirementLevels.Must,
+                                     LocationInDocument = "5.2.2. Authorization server"
+                                },
+                                new TestRequirementLevel {
+                                     Test  = Tests["OAuch.Compliance.Tests.TokenEndpoint.ClientKeySecureTest"],
+                                     RequirementLevel = RequirementLevels.Must,
+                                     LocationInDocument = "5.2.2. Authorization server"
+                                },
+                                new TestRequirementLevel {
+                                     Test  = Tests["OAuch.Compliance.Tests.Pkce.IsPkceRequiredTest"],
+                                     RequirementLevel = RequirementLevels.Must,
+                                     LocationInDocument = "5.2.2. Authorization server"
+                                },
+                                new TestRequirementLevel {
+                                     Test  = Tests["OAuch.Compliance.Tests.Pkce.HashedPkceDisabledTest"],
+                                     RequirementLevel = RequirementLevels.Must,
+                                     LocationInDocument = "5.2.2. Authorization server"
+                                },
+                                new TestRequirementLevel {
+                                     Test  = Tests["OAuch.Compliance.Tests.Pkce.IsPkceDowngradeDetectedTest"],
+                                     RequirementLevel = RequirementLevels.Must,
+                                     LocationInDocument = "5.2.2. Authorization server"
+                                },
+                                new TestRequirementLevel {
+                                     Test  = Tests["OAuch.Compliance.Tests.Pkce.IsPkceTokenDowngradeDetectedTest"],
+                                     RequirementLevel = RequirementLevels.Must,
+                                     LocationInDocument = "5.2.2. Authorization server"
+                                },
+                                new TestRequirementLevel {
+                                     Test  = Tests["OAuch.Compliance.Tests.Pkce.IsPkcePlainDowngradeDetectedTest"],
+                                     RequirementLevel = RequirementLevels.Must,
+                                     LocationInDocument = "5.2.2. Authorization server"
+                                },
+                                new TestRequirementLevel {
+                                     Test  = Tests["OAuch.Compliance.Tests.Pkce.ShortVerifierTest"],
+                                     RequirementLevel = RequirementLevels.Must,
+                                     LocationInDocument = "5.2.2. Authorization server"
+                                },
+                                new TestRequirementLevel {
+                                     Test  = Tests["OAuch.Compliance.Tests.Pkce.PlainPkceDisabledTest"],
+                                     RequirementLevel = RequirementLevels.Must,
+                                     LocationInDocument = "5.2.2. Authorization server"
+                                },
+                                new TestRequirementLevel {
+                                     Test  = Tests["OAuch.Compliance.Tests.AuthEndpoint.RedirectUriRequiredTest"],
+                                     RequirementLevel = RequirementLevels.Must,
+                                     LocationInDocument = "5.2.2. Authorization server"
+                                },
+                                new TestRequirementLevel {
+                                     Test  = Tests["OAuch.Compliance.Tests.AuthEndpoint.RedirectUriPathMatchedTest"],
+                                     RequirementLevel = RequirementLevels.Must,
+                                     LocationInDocument = "5.2.2. Authorization server"
+                                },
+                                new TestRequirementLevel {
+                                     Test  = Tests["OAuch.Compliance.Tests.AuthEndpoint.RedirectUriConfusionTest"],
+                                     RequirementLevel = RequirementLevels.Must,
+                                     LocationInDocument = "5.2.2. Authorization server"
+                                },
+                                new TestRequirementLevel {
+                                     Test  = Tests["OAuch.Compliance.Tests.AuthEndpoint.RedirectUriFullyMatchedTest"],
+                                     RequirementLevel = RequirementLevels.Must,
+                                     LocationInDocument = "5.2.2. Authorization server"
+                                },
+                                new TestRequirementLevel {
+                                     Test  = Tests["OAuch.Compliance.Tests.AuthEndpoint.CodePollutionTest"],
+                                     RequirementLevel = RequirementLevels.Must,
+                                     LocationInDocument = "5.2.2. Authorization server"
+                                },
+                                new TestRequirementLevel {
+                                     Test  = Tests["OAuch.Compliance.Tests.TokenEndpoint.MultipleCodeExchangesTest"],
+                                     RequirementLevel = RequirementLevels.Must,
+                                     LocationInDocument = "5.2.2. Authorization server"
+                                },
+                                new TestRequirementLevel {
+                                     Test  = Tests["OAuch.Compliance.Tests.Tokens.AuthorizationCodeEntropyMinReqTest"],
+                                     RequirementLevel = RequirementLevels.Must,
+                                     LocationInDocument = "5.2.2. Authorization server"
+                                },
+                                new TestRequirementLevel {
+                                     Test  = Tests["OAuch.Compliance.Tests.Tokens.AuthorizationCodeEntropySugReqTest"],
+                                     RequirementLevel = RequirementLevels.Must,
+                                     LocationInDocument = "5.2.2. Authorization server"
+                                },
+                                new TestRequirementLevel {
+                                     Test  = Tests["OAuch.Compliance.Tests.Tokens.RefreshTokenEntropyMinReqTest"],
+                                     RequirementLevel = RequirementLevels.Must,
+                                     LocationInDocument = "5.2.2. Authorization server"
+                                },
+                                new TestRequirementLevel {
+                                     Test  = Tests["OAuch.Compliance.Tests.Tokens.RefreshTokenEntropySugReqTest"],
+                                     RequirementLevel = RequirementLevels.Must,
+                                     LocationInDocument = "5.2.2. Authorization server"
+                                },
+                                new TestRequirementLevel {
+                                     Test  = Tests["OAuch.Compliance.Tests.Tokens.AccessTokenEntropyMinReqTest"],
+                                     RequirementLevel = RequirementLevels.Must,
+                                     LocationInDocument = "5.2.2. Authorization server"
+                                },
+                                new TestRequirementLevel {
+                                     Test  = Tests["OAuch.Compliance.Tests.Tokens.AccessTokenEntropySugReqTest"],
+                                     RequirementLevel = RequirementLevels.Must,
+                                     LocationInDocument = "5.2.2. Authorization server"
+                                },
+                                new TestRequirementLevel {
+                                     Test  = Tests["OAuch.Compliance.Tests.Tokens.ShortTokenTimeoutTest"],
+                                     RequirementLevel = RequirementLevels.Must,
+                                     LocationInDocument = "5.2.2. Authorization server"
+                                },
+                                //OAuch.Compliance.Tests.AuthEndpoint.SupportsPostAuthorizationRequestsTest
+
+
+
+
+
+
+
+
+                            }
+                        },
+                        new OAuthDocument {
+                            Id = "FAPI1Adv",
+                            Name = "Financial-grade API Security Profile (FAPI) 1.0 – Part 2: Advanced",
+                            Description = "A highly secured OAuth profile that aims to provide specific implementation guidelines for security and interoperability.",
+                            Url = "https://openid.net/specs/openid-financial-api-part-2-1_0.html",
+                            IsSupportedTest = "OAuch.Compliance.Tests.DocumentSupport.OpenIdSupportedTest",
+                            IsStandard = true,
+                            DocumentCategory = DocumentCategories.OpenIDConnect,
+                            DeprecatedFeatures  = new List<TestRequirementLevel> {
+                                 new TestRequirementLevel { 
+                                    Test = Tests["OAuch.Compliance.Tests.Features.IsDeprecatedTlsSupportedTest"],
+                                    RequirementLevel = RequirementLevels.Must,
+                                    LocationInDocument = "8.5. TLS considerations"
+                                 }
+                            },
+                            Countermeasures= new List<TestRequirementLevel> {
+                                new TestRequirementLevel {
+                                     Test  = Tests["OAuch.Compliance.Tests.AuthEndpoint.HasValidCertificateTest"],
+                                     RequirementLevel = RequirementLevels.Must,
+                                     LocationInDocument = "8.5. TLS considerations"
+                                },
+                                new TestRequirementLevel {
+                                     Test  = Tests["OAuch.Compliance.Tests.AuthEndpoint.IsHttpsRequiredTest"],
+                                     RequirementLevel = RequirementLevels.Must,
+                                     LocationInDocument = "8.5. TLS considerations"
+                                },
+                                new TestRequirementLevel {
+                                     Test  = Tests["OAuch.Compliance.Tests.AuthEndpoint.IsModernTlsSupportedTest"],
+                                     RequirementLevel = RequirementLevels.Must,
+                                     LocationInDocument = "8.5. TLS considerations"
+                                },
+                                new TestRequirementLevel {
+                                     Test  = Tests["OAuch.Compliance.Tests.TokenEndpoint.HasValidCertificateTest"],
+                                     RequirementLevel = RequirementLevels.Must,
+                                     LocationInDocument = "8.5. TLS considerations"
+                                },
+                                new TestRequirementLevel {
+                                     Test  = Tests["OAuch.Compliance.Tests.TokenEndpoint.IsHttpsRequiredTest"],
+                                     RequirementLevel = RequirementLevels.Must,
+                                     LocationInDocument = "8.5. TLS considerations"
+                                },
+                                new TestRequirementLevel {
+                                     Test  = Tests["OAuch.Compliance.Tests.TokenEndpoint.IsModernTlsSupportedTest"],
+                                     RequirementLevel = RequirementLevels.Must,
+                                     LocationInDocument = "8.5. TLS considerations"
+                                },
+                                new TestRequirementLevel {
+                                     Test  = Tests["OAuch.Compliance.Tests.ApiEndpoint.HasValidCertificateTest"],
+                                     RequirementLevel = RequirementLevels.Must,
+                                     LocationInDocument = "8.5. TLS considerations"
+                                },
+                                new TestRequirementLevel {
+                                     Test  = Tests["OAuch.Compliance.Tests.ApiEndpoint.IsHttpsRequiredTest"],
+                                     RequirementLevel = RequirementLevels.Must,
+                                     LocationInDocument = "8.5. TLS considerations"
+                                },
+                                new TestRequirementLevel {
+                                     Test  = Tests["OAuch.Compliance.Tests.ApiEndpoint.IsModernTlsSupportedTest"],
+                                     RequirementLevel = RequirementLevels.Must,
+                                     LocationInDocument = "8.5. TLS considerations"
+                                },
+                                new TestRequirementLevel {
+                                     Test  = Tests["OAuch.Compliance.Tests.Revocation.IsRevocationEndpointSecureTest"],
+                                     RequirementLevel = RequirementLevels.Must,
+                                     LocationInDocument = "8.5. TLS considerations"
+                                },
+                                new TestRequirementLevel {
+                                     Test  = Tests["OAuch.Compliance.Tests.Revocation.IsModernTlsSupportedTest"],
+                                     RequirementLevel = RequirementLevels.Must,
+                                     LocationInDocument = "8.5. TLS considerations"
+                                },
+
+
+                                new TestRequirementLevel {
+                                     Test  = Tests["OAuch.Compliance.Tests.AuthEndpoint.AreStrongCiphersEnabledTest"],
+                                     RequirementLevel = RequirementLevels.Must,
+                                     LocationInDocument = "8.5. TLS considerations"
+                                },
+                                new TestRequirementLevel {
+                                     Test  = Tests["OAuch.Compliance.Tests.TokenEndpoint.AreStrongCiphersEnabledTest"],
+                                     RequirementLevel = RequirementLevels.Must,
+                                     LocationInDocument = "8.5. TLS considerations"
+                                },
+                                new TestRequirementLevel {
+                                     Test  = Tests["OAuch.Compliance.Tests.ApiEndpoint.AreStrongCiphersEnabledTest"],
+                                     RequirementLevel = RequirementLevels.Must,
+                                     LocationInDocument = "8.5. TLS considerations"
+                                },
+
+
                             }
                         },
                         new OAuthDocument {

@@ -3,17 +3,23 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Newtonsoft.Json;
 using OAuch.Compliance;
 using OAuch.Compliance.Results;
 using OAuch.Compliance.Tests;
+using OAuch.Compliance.Tests.Features;
 using OAuch.Compliance.Tests.Shared;
 using OAuch.Database;
 using OAuch.Database.Entities;
 using OAuch.Helpers;
 using OAuch.Hubs;
+using OAuch.OAuthThreatModel;
+using OAuch.OAuthThreatModel.Attackers;
+using OAuch.OAuthThreatModel.Flows;
 using OAuch.Protocols.OAuth2;
+using OAuch.Shared;
 using OAuch.Shared.Enumerations;
 using OAuch.Shared.Logging;
 using OAuch.Shared.Settings;
@@ -23,9 +29,11 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net.Http.Headers;
 using System.Net.WebSockets;
 using System.Security.Claims;
 using System.Security.Cryptography.X509Certificates;
+using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
@@ -39,18 +47,6 @@ namespace OAuch.Controllers {
         private IHubContext<TestRunHub> HubContext { get; }
         private OAuchDbContext Database { get; }
 
-        //public IActionResult Paper() {
-        //    var model = new DashboardViewModel();
-        //    FillMenu(model);
-
-        //    model.SiteResults = GetSiteResults();
-
-        //    var cftests = model.SiteResults.Select(c => c.Result.AllResults.FirstOrDefault(t => t.TestId == "OAuch.Compliance.Tests.Features.CodeFlowSupportedTest")).Where(r => r != null);
-        //    var jwts = cftests.Select(c => c.TestLog.Children.OfType<LoggedJwt>().FirstOrDefault()).Where(t => t != null).Where(j => j.Content.Contains("\"HS"));
-
-
-        //    return View(model);
-        //}
         public IActionResult Index() {
             var model = new DashboardViewModel();
             FillMenu(model);
@@ -127,6 +123,138 @@ namespace OAuch.Controllers {
             return RedirectToAction("Index", "Dashboard");
         }
 
+        public IActionResult Import() {
+            var model = new EmptyViewModel();
+            FillMenu(model, pageType: PageType.Import);
+            return View(model);
+        }
+        [HttpPost]
+        public IActionResult Import(EmptyViewModel model, IFormFile file) {
+            if (file != null && file.Length > 0) {
+                byte[] blob;
+                using (var s = file.OpenReadStream()) {
+                    blob = s.ReadFully();
+                }
+                var json = Encoding.UTF8.GetString(blob);
+                var o = OAuchJsonConvert.Deserialize<SiteData[]>(json);
+                if (o != null) {
+                    foreach (var s in o) {
+                        // add the certificate
+                        if (s.Certificate != null) {
+                            var cer = new SavedCertificate() {
+                                OwnerId = this.OAuchInternalId!.Value,
+                                Name = s.Certificate.Name,
+                                Password = s.Certificate.Password,
+                                Blob = s.Certificate.Blob
+                            };
+                            Database.Certificates.Add(cer);
+                            Database.SaveChanges(); // get the CertificateId
+                            s.CurrentConfiguration.CertificateId = cer.SavedCertificateId;
+                        }
+                        // add the site
+                        var site = new Site() {
+                            Name = s.Name,
+                            OwnerId = this.OAuchInternalId!.Value,
+                            CurrentConfigurationJson = OAuchJsonConvert.Serialize(s.CurrentConfiguration),
+                            LatestResultId = null
+                        };
+                        Database.Sites.Add(site);
+                        Database.SaveChanges(); // save to get a SiteId
+                        // add the serialized tests
+                        SerializedTestRun? mostRecent = null;
+                        foreach (var tr in s.TestRuns) {
+                            var str = new SerializedTestRun {
+                                SiteId = site.SiteId,
+                                StartedAt = tr.StartedAt,
+                                ConfigurationJson = OAuchJsonConvert.Serialize(tr.Configuration),
+                                SelectedDocumentIdsJson = OAuchJsonConvert.Serialize(tr.SelectedDocumentIds),
+                                TestResultsJson = OAuchJsonConvert.Serialize(tr.TestResults),
+                                StateCollectionJson = OAuchJsonConvert.Serialize(tr.StateCollection)
+                            };
+                            if (mostRecent == null || mostRecent.StartedAt < str.StartedAt)
+                                mostRecent = str;
+                            Database.SerializedTestRuns.Add(str);
+                        }
+                        Database.SaveChanges(); // get the Id of the most recent test run
+                        if (mostRecent != null ) {
+                            site.LatestResultId = mostRecent.TestResultId;
+                            Database.SaveChanges();
+                        }
+                    }
+                    return RedirectToAction("Index");
+                } else {
+                    ModelState.AddModelError("DeserializeError", "Could not deserialize the input file.");
+                }                
+            }
+            FillMenu(model, pageType: PageType.Import);
+            return View(model);
+        }
+        public IActionResult Export(Guid id) {
+            var site = GetSite(id);
+            if (site == null)
+                return NotFound();
+            var model = new EmptyViewModel();
+            FillMenu(model, site, PageType.Export);
+            return View(model);
+        }
+        public IActionResult ExportData(Guid id) {
+            var site = GetSite(id);
+            if (site == null)
+                return NotFound();
+            var data = GetSiteData(site);
+            var jsonData = Encoding.UTF8.GetBytes(OAuchJsonConvert.Serialize(data, Formatting.Indented));
+            return File(jsonData, "application/json", "export.json");
+        }
+        [NonAction]
+        private SiteData[] GetSiteData(Site site) {
+            var currentConfig = JsonConvert.DeserializeObject<SiteSettings>(site.CurrentConfigurationJson);
+            CertificateInfo? certificate = null;
+            if (currentConfig?.CertificateId != null) {
+                var c = Database.Certificates.FirstOrDefault(c => c.SavedCertificateId == currentConfig.CertificateId);
+                if (c != null) {
+                    certificate = new CertificateInfo {
+                        Name = c.Name,
+                        Password = c.Password,
+                        Blob = c.Blob
+                    };
+                }
+            }
+            var runs = Database.SerializedTestRuns.Where(c => c.SiteId == site.SiteId).Select(c => new TestRunData {
+                StartedAt = c.StartedAt,
+                SelectedDocumentIds = OAuchJsonConvert.Deserialize<List<string>>(c.SelectedDocumentIdsJson)!,
+                Configuration = OAuchJsonConvert.Deserialize<SiteSettings>(c.ConfigurationJson)!,
+                TestResults = OAuchJsonConvert.Deserialize<List<TestResult>>(c.TestResultsJson)!,
+                StateCollection = OAuchJsonConvert.Deserialize<StateCollection>(c.StateCollectionJson)!
+            }).ToList();
+
+            return [
+                new SiteData {
+                    Name = site.Name,
+                    CurrentConfiguration = currentConfig!,
+                    Certificate = certificate,
+                    TestRuns = runs
+                }
+                ];
+        }
+
+        private class SiteData {
+            public string Name { get; set; }
+            public SiteSettings CurrentConfiguration { get; set; }
+            public CertificateInfo? Certificate {get;set;}
+            public List<TestRunData> TestRuns { get; set; }
+        }
+        private class TestRunData {
+            public DateTime StartedAt { get; set; }
+            public List<string> SelectedDocumentIds { get; set; }
+            public SiteSettings Configuration { get; set; }
+            public List<TestResult> TestResults { get; set; }
+            public StateCollection StateCollection { get; set; }
+        }
+        private class CertificateInfo { 
+            public string Name { get; set; }
+            public string? Password { get; set; }
+            public byte[] Blob { get; set; }
+        }
 
         public IActionResult AddSite() {
             var model = new AddSiteViewModel();
@@ -364,8 +492,25 @@ namespace OAuch.Controllers {
                     When = tr.StartedAt
                 })
             };
+
             FillMenu(model, site, PageType.Results);
             return View(model);
+        }
+        public IActionResult DeleteResults(Guid id /* siteId */, Guid did /* ResultId to delete from the database */ , Guid? rid = null /* selected ResultId */) {
+            var site = GetSite(id);
+            if (site == null)
+                return NotFound();
+
+            var result = Database.SerializedTestRuns.FirstOrDefault(c => c.TestResultId == did);
+            if (result == null || result.SiteId != id) // could not find result, or the user tries to delete someone else's result
+                return NotFound();
+
+            // delete the result from the database
+            Database.SerializedTestRuns.Remove(result);
+            site.LatestResultId = Database.SerializedTestRuns.Where(c => c.SiteId == id && c.TestResultId != did).Select(c => c.TestResultId).FirstOrDefault();
+            Database.SaveChanges();
+
+            return RedirectToAction("Results", new { id = id, rid = rid });
         }
 
         public IActionResult Log(Guid id /* result id */) {
@@ -381,7 +526,67 @@ namespace OAuch.Controllers {
             var model = new LogViewModel(formatter.ToHtml(id, testResults));
             return View(model);
         }
+        public IActionResult Attacks(AttacksViewModel filter) {
+            var model = GetAttacks(filter);
+            if (model == null)
+                return NotFound();
+            return PartialView(model);
+        }
+        public IActionResult AttackList(AttacksViewModel filter) {
+            var model = GetAttacks(filter);
+            if (model == null)
+                return NotFound();
+            return PartialView(model);
+        }
+        [NonAction]
+        private AttacksViewModel? GetAttacks(AttacksViewModel filter) {
+            var serializedTestRun = Database.SerializedTestRuns.FirstOrDefault(tr => tr.TestResultId == filter.Id);
+            if (serializedTestRun == null)
+                return null;
+            var site = GetSite(serializedTestRun.SiteId);
+            if (site == null)
+                return null;
 
+            var testResults = OAuchJsonConvert.Deserialize<List<TestResult>>(serializedTestRun.TestResultsJson);
+            var results = GetSiteResults(serializedTestRun);
+            var context = new ThreatModelContext(testResults, results.ThreatReports);
+            var model = new AttacksViewModel();
+            model.Id = filter.Id;
+            model.ThreatReports = results.ThreatReports.ToDictionary(c => c.Threat.Id);
+            model.AllFlows = Flow.All.Where(c => c.IsRelevant(context)).ToList();
+            model.AttackerTypes = AttackerTypes.All;
+            var allThreats = OAuthThreatModel.Threats.Threat.All.Where(c => c.IsRelevant(context)).DistinctBy(c => c.Id).ToList();
+            IEnumerable<string>? selectedAttackers = filter?.SelectedFilter;
+            if (selectedAttackers == null)
+                selectedAttackers = model.AttackerTypes.Select(c => c.Id);
+
+            model.AllUnmitigatedThreats = allThreats.Where(c => {
+                if (!model.ThreatReports.TryGetValue(c.Id, out var tr))
+                    return false;
+                return tr.Outcome == TestOutcomes.SpecificationNotImplemented && tr.Threat.AliasOf == null;
+            }).ToList();
+            model.AllPartialThreats = allThreats.Where(c => {
+                if (!model.ThreatReports.TryGetValue(c.Id, out var tr))
+                    return false;
+                return tr.Outcome == TestOutcomes.SpecificationPartiallyImplemented && tr.Threat.AliasOf == null;
+            }).ToList();
+
+            if (filter?.SelectedFilter != null) {
+                model.SelectedFilter = filter.SelectedFilter;
+            } else {
+                var allSelected = new List<string>();
+                allSelected.AddRange(model.AllFlows.Select(c => c.Id));
+                allSelected.AddRange(model.AllUnmitigatedThreats.Select(c => c.Id));
+                allSelected.AddRange(model.AllPartialThreats.Select(c => c.Id)); // By default we do not consider partial threats
+                allSelected.AddRange(model.AttackerTypes.Select(c => c.Id));
+                model.SelectedFilter = allSelected;
+            }
+
+            model.AttackReport = results.GetAttackReport(model.SelectedFilter, context);
+
+            return model;
+        }
+        private static int InternalCounter = 0;
 
         [NonAction]
         private Site? GetSite(Guid id) {

@@ -13,9 +13,8 @@ using System.Threading.Tasks;
 
 namespace OAuch.Compliance.Tests.TokenEndpoint {
     public class TokenValidAfterMultiExchangeTest : Test {
-        public override string Title => "Are tokens invalidated after exchanging the same code multiple times";
-        public override string Description => "This test checks if tokens are invalidated after exchanging the same code multiple times.";
-        public override string? TestingStrategy => "";
+        public override string Title => "Are access tokens invalidated after exchanging the same authorization code multiple times";
+        public override string Description => "This test checks if access tokens are invalidated after exchanging the same authorization code multiple times.";
         public override TestResultFormatter ResultFormatter => TestResultFormatter.YesGoodNoBad;
         public override Type ResultType => typeof(TokenValidAfterMultiExchangeTestResult);
     }

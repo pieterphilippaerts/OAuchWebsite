@@ -22,6 +22,8 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Rewrite;
 using OAuch.Shared.Interfaces;
 using OAuch.Workers;
+using Microsoft.AspNetCore.ResponseCompression;
+using System.IO.Compression;
 
 namespace OAuch {
     public class Startup {
@@ -92,6 +94,29 @@ namespace OAuch {
             services.AddSingleton<ICertificateResolver>(new CertificateResolver());
             services.AddSingleton(secrets!);
             services.AddRazorPages();
+            services.AddResponseCompression(options => {
+                options.MimeTypes = ResponseCompressionDefaults.MimeTypes.Concat(
+                    [
+                        "application/javascript",
+                        "application/json;",
+                        "application/xml",
+                        "text/css",
+                        "text/html",
+                        "text/json",
+                        "text/plain",
+                        "text/xml"
+                    ]);
+                options.EnableForHttps = true;
+                options.Providers.Add<BrotliCompressionProvider>();
+                options.Providers.Add<GzipCompressionProvider>();
+            });
+            builder.Services.Configure<BrotliCompressionProviderOptions>(options => {
+                options.Level = CompressionLevel.Fastest;
+            });
+            builder.Services.Configure<GzipCompressionProviderOptions>(options => {
+                options.Level = CompressionLevel.Optimal;
+            });
+
 #if DEBUG
             builder.AddRazorRuntimeCompilation();
 #endif
@@ -118,6 +143,9 @@ namespace OAuch {
                 await next.Invoke();
             });
 
+#if !DEBUG 
+            app.UseResponseCompression(); // Response Compression interferes with injected debug script from Visual Studio; only enable it on RELEASE
+#endif
             app.UseHttpsRedirection();
 
             // rewrite www.oauch.io to oauch.io
