@@ -7,3 +7,4 @@ git fetch upstream
 git checkout main
 git merge upstream/main
 [resolve merge conflicts]
+=> push
