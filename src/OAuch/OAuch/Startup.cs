@@ -1,29 +1,24 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.HttpsPolicy;
+using Microsoft.AspNetCore.ResponseCompression;
+using Microsoft.AspNetCore.Rewrite;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using OAuch.Database;
+using OAuch.Helpers;
+using OAuch.Hubs;
 using OAuch.LogConverters;
 using OAuch.Protocols.Http;
 using OAuch.Protocols.JWK;
 using OAuch.Protocols.JWT;
-using OAuch.Shared.Logging;
-using OAuch.Helpers;
-using OAuch.Database;
-using OAuch.Hubs;
-using OAuch.TestRuns;
 using OAuch.Protocols.OAuth2;
-using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.AspNetCore.Rewrite;
 using OAuch.Shared.Interfaces;
 using OAuch.Workers;
 using Microsoft.AspNetCore.ResponseCompression;
 using System.IO.Compression;
+using System.Linq;
 
 namespace OAuch {
     public class Startup {
@@ -133,13 +128,13 @@ namespace OAuch {
 #endif
             app.Use(async (context, next) => {
                 /* Do not add Strict-Transport-Security */
-                context.Response.Headers.Add("X-Frame-Options", "DENY");
-                context.Response.Headers.Add("X-XSS-Protection", "1; mode=block");
-                context.Response.Headers.Add("X-Content-Type-Options", "nosniff");
-                context.Response.Headers.Add("Content-Security-Policy", "default-src 'self'; script-src 'self' 'unsafe-inline' www.google.com www.gstatic.com; style-src 'self' 'unsafe-inline' code.ionicframework.com fonts.googleapis.com; font-src 'self' code.ionicframework.com fonts.gstatic.com; frame-src www.google.com; frame-ancestors 'none'; navigate-to *; img-src 'self' www.gstatic.com;");
-                context.Response.Headers.Add("Referrer-Policy", "no-referrer");
-                context.Response.Headers.Add("Feature-Policy", "geolocation 'none';midi 'none';notifications 'none';push 'none';sync-xhr 'none';microphone 'none';camera 'none';magnetometer 'none';gyroscope 'none';speaker 'self';vibrate 'none';fullscreen 'self';payment 'none';accelerometer 'none';ambient-light-sensor 'none';autoplay 'none';document-write 'none';usb 'none'");
-                context.Response.Headers.Add("Permissions-Policy", "geolocation=();midi=();notifications=();push=();sync-xhr=();microphone=();camera=();magnetometer=();gyroscope=();speaker=(self);vibrate=();fullscreen=(self);payment=();accelerometer=();ambient-light-sensor=();autoplay=();document-write=();usb=()");
+                context.Response.Headers["X-Frame-Options"] = "DENY";
+                context.Response.Headers["X-XSS-Protection"] = "1; mode=block";
+                context.Response.Headers["X-Content-Type-Options"] = "nosniff";
+                context.Response.Headers["Content-Security-Policy"] = "default-src 'self'; script-src 'self' 'unsafe-inline' www.google.com www.gstatic.com; style-src 'self' 'unsafe-inline' code.ionicframework.com fonts.googleapis.com; font-src 'self' code.ionicframework.com fonts.gstatic.com; frame-src www.google.com; frame-ancestors 'none'; navigate-to *; img-src 'self' www.gstatic.com;";
+                context.Response.Headers["Referrer-Policy"] = "no-referrer";
+                context.Response.Headers["Feature-Policy"] = "geolocation 'none';midi 'none';notifications 'none';push 'none';sync-xhr 'none';microphone 'none';camera 'none';magnetometer 'none';gyroscope 'none';speaker 'self';vibrate 'none';fullscreen 'self';payment 'none';accelerometer 'none';ambient-light-sensor 'none';autoplay 'none';document-write 'none';usb 'none'";
+                context.Response.Headers["Permissions-Policy"] = "geolocation=();midi=();notifications=();push=();sync-xhr=();microphone=();camera=();magnetometer=();gyroscope=();speaker=(self);vibrate=();fullscreen=(self);payment=();accelerometer=();ambient-light-sensor=();autoplay=();document-write=();usb=()";
                 await next.Invoke();
             });
 

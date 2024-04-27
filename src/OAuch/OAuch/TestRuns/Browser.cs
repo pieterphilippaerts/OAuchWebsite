@@ -1,17 +1,15 @@
 ﻿using OAuch.Hubs;
 using OAuch.LogConverters;
-using OAuch.Protocols.Http;
 using OAuch.Shared;
 using OAuch.Shared.Interfaces;
 using OAuch.Shared.Logging;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 
 namespace OAuch.TestRuns {
     public class Browser : IBrowser {
         public Browser(LogContext logger, TestRunConnection connection, StateCollection state) {
-            _waitingCallbacks = new List<CallbackInfo>();
+            _waitingCallbacks = [];
             this.Logger = logger;
             this.Connection = connection;
             this.State = state;
@@ -105,7 +103,7 @@ namespace OAuch.TestRuns {
             await Connection.SendFeatureDetected(connectionId, name, available);
         }
 
-        private List<CallbackInfo> _waitingCallbacks;
+        private readonly List<CallbackInfo> _waitingCallbacks;
 
         private class CallbackInfo {
             public CallbackInfo(string? redirectUri, TaskCompletionSource<ICallbackResult?> completionSource) {

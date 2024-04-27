@@ -1,15 +1,11 @@
 ﻿using OAuch.Compliance.Tests.Features;
 using OAuch.Compliance.Tests.Shared;
-using OAuch.Protocols.Http;
 using OAuch.Protocols.OAuth2;
 using OAuch.Protocols.OAuth2.BuildingBlocks;
 using OAuch.Protocols.OAuth2.Pipeline;
 using OAuch.Shared;
 using OAuch.Shared.Enumerations;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace OAuch.Compliance.Tests.TokenEndpoint {
@@ -23,7 +19,7 @@ namespace OAuch.Compliance.Tests.TokenEndpoint {
         public AuthorizationCodeTimeoutTestResult(string testId) : base(testId) { }
         public override Type ImplementationType => typeof(AuthorizationCodeTimeoutTestImplementation);
     }
-    public class AuthorizationCodeTimeoutInfo : ITimeDelayedTest { 
+    public class AuthorizationCodeTimeoutInfo : ITimeDelayedTest {
         public string? AuthorizationCode { get; set; }
         public string? CodeVerifier { get; set; }
         public DateTime? ResumeWhen { get; set; }
@@ -38,8 +34,7 @@ namespace OAuch.Compliance.Tests.TokenEndpoint {
                 return;
             }
 
-            var provider = flows.CreateProvider(Context, (f, p) => f.HasAuthorizationCodes) as AuthorizationCodeTokenProvider;
-            if (provider == null) {
+            if (flows.CreateProvider(Context, (f, p) => f.HasAuthorizationCodes) is not AuthorizationCodeTokenProvider provider) {
                 Result.Outcome = TestOutcomes.Skipped;
                 return;
             }
@@ -70,7 +65,7 @@ namespace OAuch.Compliance.Tests.TokenEndpoint {
                 ExtraInfo.AuthorizationCode = codeResult.AuthorizationCode;
                 ExtraInfo.ResumeWhen = DateTime.Now.AddMinutes(12);
                 ExtraInfo.CodeVerifier = provider.CodeVerifier;
-                LogInfo($"Authorization code request succeeded. Please resume this test run after { ExtraInfo.ResumeWhen.Value:HH:mm:ss} to complete the test.");
+                LogInfo($"Authorization code request succeeded. Please resume this test run after {ExtraInfo.ResumeWhen.Value:HH:mm:ss} to complete the test.");
             } else if (ExtraInfo.ResumeWhen.HasValue && DateTime.Now >= ExtraInfo.ResumeWhen.Value) {
                 // code should have expired
                 provider.CodeVerifier = ExtraInfo.CodeVerifier ?? "";
@@ -83,8 +78,9 @@ namespace OAuch.Compliance.Tests.TokenEndpoint {
                     .Then(new GetServerResponseFromHttpResponse())
                     .FinishTokenResponse();
 
-                var tokenResult = new TokenResult();
-                tokenResult.AuthorizationResponse = ServerResponse.FromAuthorizationCode(ExtraInfo.AuthorizationCode);
+                var tokenResult = new TokenResult {
+                    AuthorizationResponse = ServerResponse.FromAuthorizationCode(ExtraInfo.AuthorizationCode)
+                };
                 var success = await exchangeCodePipeline.Run(provider, tokenResult);
                 if (tokenResult.AccessToken != null) {
                     Result.Outcome = TestOutcomes.SpecificationNotImplemented;

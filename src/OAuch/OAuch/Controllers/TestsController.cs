@@ -2,10 +2,7 @@
 using OAuch.Compliance;
 using OAuch.Helpers;
 using OAuch.ViewModels;
-using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
 
 namespace OAuch.Controllers {
     public class TestsController : BaseController {
@@ -20,12 +17,11 @@ namespace OAuch.Controllers {
                 return NotFound();
             var model = new TestViewModel() {
                 Test = test,
-                Requirements = new Dictionary<OAuthDocument, TestRequirementLevel>()
+                Requirements = []
             };
-            foreach(var document in ComplianceDatabase.AllDocuments) {
-                var req = document.Countermeasures.Where(c => c.Test.TestId == id).FirstOrDefault();
-                if (req == null)
-                    req = document.DeprecatedFeatures.Where(c => c.Test.TestId == id).FirstOrDefault();
+            foreach (var document in ComplianceDatabase.AllDocuments) {
+                var req = document.Countermeasures.FirstOrDefault(c => c.Test.TestId == id);
+                req ??= document.DeprecatedFeatures.FirstOrDefault(c => c.Test.TestId == id);
                 if (req != null)
                     model.Requirements[document] = req;
             }

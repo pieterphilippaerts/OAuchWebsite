@@ -4,9 +4,10 @@
 	  <TargetFramework>net8.0</TargetFramework>
 	  <Nullable>enable</Nullable>
 	  <LangVersion>latest</LangVersion>
+	  <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 
-  <ItemGroup>
+	<ItemGroup>
     <Compile Remove="Tests\MutualTls\**" />
     <EmbeddedResource Remove="Tests\MutualTls\**" />
     <None Remove="Tests\MutualTls\**" />
@@ -20,6 +21,9 @@
 	  <ProjectReference Include="..\OAuch.OAuthThreatModel\OAuch.OAuthThreatModel.csproj" />
 	  <ProjectReference Include="..\OAuch.Protocols\OAuch.Protocols.csproj" />
 	  <ProjectReference Include="..\OAuch.Shared\OAuch.Shared.csproj" />
+	</ItemGroup>
+	<ItemGroup>
+	  <Folder Include="Tests\Concurrency\" />
 	</ItemGroup>
 
 </Project>

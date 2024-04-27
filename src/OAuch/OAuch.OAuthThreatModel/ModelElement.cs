@@ -1,11 +1,5 @@
 ﻿using OAuch.OAuthThreatModel.Consequences;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
-using static System.Net.Mime.MediaTypeNames;
 
 namespace OAuch.OAuthThreatModel {
     public abstract class ModelElement {
@@ -33,8 +27,7 @@ namespace OAuch.OAuthThreatModel {
             var types = Assembly.GetExecutingAssembly().GetExportedTypes().Where(c => !c.IsAbstract && testType.IsAssignableFrom(c)).ToList();
             var l = new List<T>();
             foreach (var t in types) {
-                var i = Activator.CreateInstance(t) as T;
-                if (i != null) {
+                if (Activator.CreateInstance(t) is T i) {
                     l.Add(i);
                 }
             }

@@ -1,6 +1,4 @@
 ﻿using Microsoft.AspNetCore.SignalR;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
-using Newtonsoft.Json;
 using OAuch.Compliance;
 using OAuch.Compliance.Tests;
 using OAuch.Database;
@@ -13,10 +11,9 @@ using OAuch.Shared.Settings;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
-using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
-using System.Transactions;
 
 namespace OAuch.TestRuns {
     public class TestRunManager {
@@ -29,10 +26,10 @@ namespace OAuch.TestRuns {
             this.Log = new RelayLogContext();
             var stateCollection = new StateCollection();
             this.Browser = new Browser(this.Log, this.Connection, stateCollection);
-            var settings = OAuchJsonConvert.Deserialize<SiteSettings>(site.CurrentConfigurationJson);
-            var documents = settings.SelectedStandards.Select(did => ComplianceDatabase.AllDocuments.FirstOrDefault(d => d.Id == did)).Where(d => d != null).ToList(); //ComplianceDatabase.AllDocuments.ToList();
-            if (documents.Count == 0)
-                documents = ComplianceDatabase.AllDocuments.ToList(); // should we keep this or not?
+            var settings = OAuchJsonConvert.Deserialize<SiteSettings>(site.CurrentConfigurationJson) ?? throw new InvalidDataException("Could not deserialize data.");
+            var documents = settings.SelectedStandards?.Select(did => ComplianceDatabase.AllDocuments.FirstOrDefault(d => d.Id == did)).Where(d => d != null).Cast<OAuthDocument>().ToList(); //ComplianceDatabase.AllDocuments.ToList();
+            if (documents == null || documents.Count == 0)
+                documents = [.. ComplianceDatabase.AllDocuments]; // should we keep this or not?
             var testResults = CreateEmptyResults(documents);
             this.TestRun = new TestRun {
                 IsCompleted = false,
@@ -55,9 +52,11 @@ namespace OAuch.TestRuns {
             this.Connection = new TestRunConnection(hubContext, this.ManagerId.ToString("N"));
             this.Log = new RelayLogContext();
             var stateCollection = OAuchJsonConvert.Deserialize<StateCollection>(serializedTestRun.StateCollectionJson);
-            this.Browser = new Browser(this.Log, this.Connection, stateCollection);
             var settings = OAuchJsonConvert.Deserialize<SiteSettings>(serializedTestRun.ConfigurationJson);
             var docIds = OAuchJsonConvert.Deserialize<List<string>>(serializedTestRun.SelectedDocumentIdsJson);
+            if (stateCollection == null || settings == null || docIds == null)
+                throw new InvalidDataException("Could not deserialize data.");
+            this.Browser = new Browser(this.Log, this.Connection, stateCollection);
             var documents = docIds.Select(did => ComplianceDatabase.AllDocuments.FirstOrDefault(d => d.Id == did)).Where(d => d != null).ToList();
             var testResults = OAuchJsonConvert.Deserialize<List<TestResult>>(serializedTestRun.TestResultsJson);
             testResults = CreateEmptyResults(documents, testResults); // this adds empty results for tests that were not implemented when the serialized test run was executed
@@ -77,7 +76,7 @@ namespace OAuch.TestRuns {
             _isSaved = true; // this test run is already present in the database
         }
 
-        private void ClearRetries(List<TestResult> testResults, IEnumerable<string>? retryIds) {
+        private static void ClearRetries(List<TestResult> testResults, IEnumerable<string>? retryIds) {
             if (retryIds == null)
                 return;
 
@@ -94,10 +93,10 @@ namespace OAuch.TestRuns {
         /// This method checks if new test implementations have been added since this test run was executed,
         /// and if such implementations are found they are added to the test run.        
         /// </summary>        
-        private List<TestResult> CreateEmptyResults(IEnumerable<OAuthDocument?> documents, List<TestResult>? oldResults = null) {
+        private static List<TestResult> CreateEmptyResults(IEnumerable<OAuthDocument?> documents, List<TestResult>? oldResults = null) {
             List<TestResult> resultsList;
             if (oldResults == null)
-                resultsList = new List<TestResult>();
+                resultsList = [];
             else
                 resultsList = oldResults;
             var resultTypesList = resultsList.Select(tr => tr.GetType()).ToList();
@@ -112,7 +111,7 @@ namespace OAuch.TestRuns {
                 }
             }
             return resultsList;
-            
+
             void AddTests(IEnumerable<Test> tests) {
                 foreach (var testRL in tests) {
                     AddTest(testRL);
@@ -174,7 +173,7 @@ namespace OAuch.TestRuns {
             //if (Context.Site.Settings.ExcludeImplicitFlow) excludedCategories.Add(TestCategories.ImplicitFlow);
             //if (Context.Site.Settings.ExcludePasswordFlow) excludedCategories.Add(TestCategories.PasswordFlow);
             //if (Context.Site.Settings.ExcludeTestAPI) excludedCategories.Add(TestCategories.Tokens);
-            
+
             int tested = 0;
             foreach (var tr in TestRun.TestResults) {
                 if (tr.Outcome == null) {  // we haven't run the test yet
@@ -220,10 +219,10 @@ namespace OAuch.TestRuns {
 
             RemoveManager(this.ManagerId);
 
-            string Shorten(string id) {
+            static string Shorten(string id) {
                 int index = id.LastIndexOf('.');
                 if (index >= 0) {
-                    return id.Substring(index + 1);
+                    return id[(index + 1)..];
                 } else {
                     return id;
                 }
@@ -255,14 +254,12 @@ namespace OAuch.TestRuns {
         public TestRunConnection Connection { get; }
         public bool HasStarted { get; private set; }
         private bool _isCanceled;
-        private bool _isSaved;
+        private readonly bool _isSaved;
 
         public static TestRunManager CreateManager(Site site, IHubContext<TestRunHub> hubContext) {
             lock (_managers) {
                 TestRunManager? manager = _managers.Values.FirstOrDefault(m => m.SiteId == site.SiteId);
-                if (manager == null) {
-                    manager = new TestRunManager(site, hubContext);
-                }
+                manager ??= new TestRunManager(site, hubContext);
                 _managers[manager.ManagerId] = manager;
                 return manager;
             }
@@ -270,8 +267,8 @@ namespace OAuch.TestRuns {
         public static TestRunManager CreateManager(SerializedTestRun serializedTestRun, Guid ownerId, IHubContext<TestRunHub> hubContext, IEnumerable<string>? retryIds = null) {
             lock (_managers) {
                 TestRunManager manager;
-                if (_managers.ContainsKey(serializedTestRun.TestResultId)) {
-                    manager = _managers[serializedTestRun.TestResultId];
+                if (_managers.TryGetValue(serializedTestRun.TestResultId, out TestRunManager? value)) {
+                    manager = value;
                 } else {
                     manager = new TestRunManager(serializedTestRun, ownerId, hubContext, retryIds);
                     _managers[manager.ManagerId] = manager;
@@ -288,18 +285,18 @@ namespace OAuch.TestRuns {
             get {
                 IList<TestRunManager> ret;
                 lock (_managers) {
-                    ret = _managers.Values.ToList();
+                    ret = [.. _managers.Values];
                 }
                 return ret;
             }
         }
         public static TestRunManager? ManagerById(Guid id) {
             lock (_managers) {
-                if (_managers.ContainsKey(id))
-                    return _managers[id];
+                if (_managers.TryGetValue(id, out TestRunManager? value))
+                    return value;
             }
             return null;
         }
-        private static Dictionary<Guid, TestRunManager> _managers = new();
+        private static readonly Dictionary<Guid, TestRunManager> _managers = [];
     }
 }

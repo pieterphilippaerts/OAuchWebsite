@@ -1,10 +1,4 @@
 ﻿using OAuch.OAuthThreatModel.Consequences;
-using OAuch.OAuthThreatModel.Enrichers;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace OAuch.OAuthThreatModel.Flows {
     public abstract class Flow : ModelElement {
@@ -22,9 +16,7 @@ namespace OAuch.OAuthThreatModel.Flows {
 
         public static List<Flow> All {
             get {
-                if (_allFlows == null) {
-                    _allFlows = FindElements<Flow>();
-                }
+                _allFlows ??= FindElements<Flow>();
                 return _allFlows;
             }
         }

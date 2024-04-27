@@ -7,8 +7,6 @@ using OAuch.Shared.Settings;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace OAuch.Compliance.Results {
     public class ComplianceResult {
@@ -16,7 +14,7 @@ namespace OAuch.Compliance.Results {
             this.StartedAt = startedAt;
             this.TestSettings = settings;
 
-            this.AllResults = new List<TestResult>();
+            this.AllResults = [];
             if (testResults != null)
                 this.AllResults.AddRange(testResults);
             _allResults = this.AllResults.ToDictionary(i => i.TestId);
@@ -25,15 +23,14 @@ namespace OAuch.Compliance.Results {
             this.FailedTests = this.AllResults.Count(c => c.Outcome == TestOutcomes.Failed);
             this.PendingTests = this.AllResults.Count(c => c.Outcome == null);
             if (this.PendingTests > 0) {
-                foreach(var pt in this.AllResults.Where(t => t.Outcome == null)) {
-                    var cr = pt as IHasInfo;
-                    if (cr == null) {
+                foreach (var pt in this.AllResults.Where(t => t.Outcome == null)) {
+                    if (pt is not IHasInfo cr) {
                         // the test has not been executed yet
                         this.ResumeWhen = DateTime.Now;
                         break;
-                    } else { 
+                    } else {
                         var ei = cr.ExtraInfo as ITimeDelayedTest;
-                        if (ei?.ResumeWhen != null) {                            
+                        if (ei?.ResumeWhen != null) {
                             if (this.ResumeWhen == null) {
                                 this.ResumeWhen = ei.ResumeWhen;
                             } else if (ei.ResumeWhen < this.ResumeWhen) {
@@ -92,8 +89,8 @@ namespace OAuch.Compliance.Results {
             }
             return new ComplianceReport(this.AllResults, deprecatedFeatures.Values, countermeasures.Values);
 
-            bool MustReplace(RequirementLevels storedRl, RequirementLevels newRl) {
-                if (storedRl == newRl 
+            static bool MustReplace(RequirementLevels storedRl, RequirementLevels newRl) {
+                if (storedRl == newRl
                         || storedRl == RequirementLevels.Must
                         || (storedRl == RequirementLevels.Should && newRl != RequirementLevels.Must)
                         || newRl == RequirementLevels.May)
@@ -129,7 +126,7 @@ namespace OAuch.Compliance.Results {
         public IReadOnlyList<TokenProviderInfo> SupportedFlows {
             get {
                 if (_supportedFlows == null) {
-                    _supportedFlows = new List<TokenProviderInfo>();
+                    _supportedFlows = [];
                     foreach (var result in AllResults) {
                         var flowResult = result as FlowSupportedTestResult;
                         if (flowResult?.ExtraInfo?.Settings != null) {
@@ -148,10 +145,8 @@ namespace OAuch.Compliance.Results {
         public IList<ThreatReport> ThreatReports { get; }
 
         public ImprovementReport ImprovementReport {
-            get { 
-                if (_improvementReport == null) {
-                    _improvementReport = new ImprovementReport(_allResults, this.ThreatReports);
-                }
+            get {
+                _improvementReport ??= new ImprovementReport(/*_allResults,*/ this.ThreatReports);
                 return _improvementReport;
             }
         }
@@ -160,7 +155,6 @@ namespace OAuch.Compliance.Results {
         public AttackReport GetAttackReport(IEnumerable<string> selectedElements, ThreatModelContext? existingContext = null) {
             return new AttackReport(this.AllResults, this.ThreatReports, selectedElements, existingContext);
         }
-        private AttackReport? _attackReport;
 
         public List<TestResult> AllResults { get; }
         public TestResult? this[string testId] {
@@ -171,10 +165,10 @@ namespace OAuch.Compliance.Results {
                 return null;
             }
         }
-        private Dictionary<string, TestResult> _allResults;
+        private readonly Dictionary<string, TestResult> _allResults;
     }
 
-    public enum SimpleRatings { 
+    public enum SimpleRatings {
         APlus,
         A,
         B,

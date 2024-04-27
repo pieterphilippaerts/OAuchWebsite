@@ -6,8 +6,6 @@ using OAuch.Shared;
 using OAuch.Shared.Enumerations;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace OAuch.Compliance.Tests.TokenEndpoint {
@@ -68,7 +66,7 @@ namespace OAuch.Compliance.Tests.TokenEndpoint {
                 if (AddOfflineAccess) {
                     var scope = this.Scope;
                     if (scope != null && scope.Length > 0)
-                        scope = scope + " ";
+                        scope += " ";
 
                     value["scope"] = scope + "offline_access";
                 }

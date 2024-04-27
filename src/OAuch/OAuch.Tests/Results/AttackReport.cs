@@ -3,22 +3,18 @@ using OAuch.OAuthThreatModel;
 using OAuch.OAuthThreatModel.Consequences;
 using OAuch.OAuthThreatModel.Enrichers;
 using OAuch.OAuthThreatModel.Flows;
-using OAuch.OAuthThreatModel.Threats;
 using OAuch.Shared;
 using OAuch.Shared.Enumerations;
 using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Runtime.Intrinsics;
-using System.Text;
-using System.Threading.Tasks;
-using ElementIdOps = System.Runtime.Intrinsics.Vector256;
-using ElementId = System.Runtime.Intrinsics.Vector256<byte>;
-using ConsequenceIdOps = System.Runtime.Intrinsics.Vector128;
 using ConsequenceId = System.Runtime.Intrinsics.Vector128<byte>;
+using ConsequenceIdOps = System.Runtime.Intrinsics.Vector128;
+using ElementId = System.Runtime.Intrinsics.Vector256<byte>;
+using ElementIdOps = System.Runtime.Intrinsics.Vector256;
 
 namespace OAuch.Compliance.Results {
     /// <summary>
@@ -33,6 +29,7 @@ namespace OAuch.Compliance.Results {
             this.EmptyConsequence = CreateEmptyConsequence();
             CalculateModelDependencies(allResults, threatReports, selectedElements, existingContext);
         }
+        [MemberNotNull(nameof(_chains), nameof(Context))]
         private void CalculateModelDependencies(IList<TestResult> allResults, IList<ThreatReport> threatReports, IEnumerable<string> selectedElements, ThreatModelContext? existingContext = null) {
             CalculationContext context;
             if (existingContext == null)
@@ -41,7 +38,7 @@ namespace OAuch.Compliance.Results {
                 context = new CalculationContext(existingContext, threatReports);
             // Create structures that hold ConsequenceType data
             // Every ConsequenceType receives a corresponding BitId (exponent of 2 number, stored in a bit Vector)
-            context.ConsequenceIndices = new Dictionary<ConsequenceType, int>();
+            context.ConsequenceIndices = [];
             context.Consequences = ConsequenceTypes.All.ToArray();
             context.ConsequenceBitIds = new ConsequenceId[context.Consequences.Length];
             context.VulnerabilityBitIds = this.EmptyConsequence;
@@ -53,7 +50,7 @@ namespace OAuch.Compliance.Results {
             }
             // Create structures that hold ModelElement data
             // Every ModelElement receives a corresponding BitId (exponent of 2 number, stored in a bit Vector)
-            context.ElementIndices = new Dictionary<ModelElement, int>();
+            context.ElementIndices = [];
             context.ModelElements =
             [
                 .. Flow.All.Where(c => c.IsRelevant(context) && selectedElements.Contains(c.Id)),
@@ -93,23 +90,23 @@ namespace OAuch.Compliance.Results {
             _chains = chains;
             this.Context = context;
         }
-        private AttackChain? CreateAttackChain(CalculationContext context, ElementId currentChain) {
+        private static AttackChain? CreateAttackChain(CalculationContext context, ElementId currentChain) {
             // reconstruct the elements in a chain
             var elements = new List<ModelElement>();
-            foreach(var mev in context.ModelElementVectors) {
+            foreach (var mev in context.ModelElementVectors) {
                 if (ElementIdOps.BitwiseAnd(currentChain, mev.BitId) == mev.BitId) {
                     elements.Add(mev.Element);
                 }
             }
-            elements = elements.OrderBy(c => (c is Enricher) ? 1 : 2).ToList(); // make sure the enrichers are first in the list; we want to use them as soon as possible in the chain
+            elements = [.. elements.OrderBy(c => (c is Enricher) ? 1 : 2)]; // make sure the enrichers are first in the list; we want to use them as soon as possible in the chain
             // reconstruct the order of the chain
             var state = new List<ConsequenceType>();
             var flow = elements.First(c => c is Flow);
             state.AddRange(flow.Consequences);
             var orderedElements = new List<ModelElement>() { flow };
             elements.Remove(flow);
-            while(!state.Any(c => c.IsVulnerability)) {
-                for(int i = 0; i < elements.Count; i++) {
+            while (!state.Any(c => c.IsVulnerability)) {
+                for (int i = 0; i < elements.Count; i++) {
                     if (elements[i].DependsOn.All(c => state.Contains(c))) { // is precondition met?
                         // select it
                         state.AddRange(elements[i].Consequences); // update state
@@ -151,7 +148,7 @@ namespace OAuch.Compliance.Results {
             }
             return true;
         }
-        private bool ReportChain(CalculationContext context, ElementId chain) {
+        private static bool ReportChain(CalculationContext context, ElementId chain) {
             // make sure we don't have the same (or a better) chain already
             var node = context.Chains.First;
             while (node != null) { // loop through the existing nodes
@@ -176,13 +173,13 @@ namespace OAuch.Compliance.Results {
         public IReadOnlyList<AttackChain> AttackChains => _chains;
 
         private IReadOnlyList<AttackChain> _chains;
-        public int MaxResults => 50;
+        public const int MaxResults = 50;
 
         public ThreatModelContext Context { get; private set; }
 
 
         private class CalculationContext : ThreatModelContext {
-            
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
             public CalculationContext(ThreatModelContext existingContext, IList<ThreatReport> threatReports) : base(existingContext) {
                 ThreatReports = threatReports.ToDictionary(c => c.Threat.Id);
                 Chains = new LinkedList<ElementId>();
@@ -191,6 +188,7 @@ namespace OAuch.Compliance.Results {
                 ThreatReports = threatReports.ToDictionary(c => c.Threat.Id);
                 Chains = new LinkedList<ElementId>();
             }
+#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
 
             // ConsequenceType
             public Dictionary<ConsequenceType, int> ConsequenceIndices;
@@ -223,7 +221,7 @@ namespace OAuch.Compliance.Results {
             Array.Clear(bufferConsequence);
             return ConsequenceIdOps.Create(bufferConsequence);
         }
-        private ConsequenceId EmptyConsequence;
+        private readonly ConsequenceId EmptyConsequence;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private ConsequenceId CreateConsequence(int position) {
@@ -233,7 +231,7 @@ namespace OAuch.Compliance.Results {
             bufferConsequence[bl] = (byte)(1 << pos);
             return ConsequenceIdOps.Create(bufferConsequence);
         }
-        private byte[] bufferConsequence = new byte[ConsequenceByteLength];
+        private readonly byte[] bufferConsequence = new byte[ConsequenceByteLength];
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private ElementId CreateElement(int position) {
@@ -243,17 +241,17 @@ namespace OAuch.Compliance.Results {
             bufferElement[bl] = (byte)(1 << pos);
             return ElementIdOps.Create(bufferElement);
         }
-        private byte[] bufferElement = new byte[ElementByteLength];
+        private readonly byte[] bufferElement = new byte[ElementByteLength];
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private bool TestBit(Vector128<byte> source, int position) {
-            var bl = position / 8;
-            var pos = position % 8;
-            var bte = Vector128.GetElement(source, bl);
-            return (bte & (byte)(1 << pos)) > 0;
-        }
+        //[MethodImpl(MethodImplOptions.AggressiveInlining)]
+        //private bool TestBit(Vector128<byte> source, int position) {
+        //    var bl = position / 8;
+        //    var pos = position % 8;
+        //    var bte = Vector128.GetElement(source, bl);
+        //    return (bte & (byte)(1 << pos)) > 0;
+        //}
 
-        private struct ModelElementVectors {
+        private readonly struct ModelElementVectors {
             public ModelElementVectors(ElementId bitId, ModelElement element, ConsequenceId preconditions, ConsequenceId consequences) {
                 this.BitId = bitId;
                 this.Element = element;
@@ -273,7 +271,7 @@ namespace OAuch.Compliance.Results {
         }
         public ThreatModelContext(IList<TestResult> allResults, IList<ThreatReport> threatReports) {
             // cache the testcase implementation results
-            TestcaseResults = new Dictionary<string, bool>();
+            TestcaseResults = [];
             foreach (var tc in allResults) {
                 if (tc.Outcome != null) {
                     switch (tc.Outcome) {
@@ -289,7 +287,7 @@ namespace OAuch.Compliance.Results {
             }
 
             // cache the threat results
-            UnmitigatedThreatResults = new Dictionary<string, bool>();
+            UnmitigatedThreatResults = [];
             foreach (var tr in threatReports) {
                 if (tr.Outcome != null) {
                     switch (tr.Outcome) {

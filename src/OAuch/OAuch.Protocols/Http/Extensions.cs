@@ -1,8 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Net;
 using System.Security.Authentication;
-using System.Text;
 using System.Web;
 
 namespace OAuch.Protocols.Http {
@@ -14,13 +12,13 @@ namespace OAuch.Protocols.Http {
             return headers.Get("Content-Security-Policy") != null;
         }
         public static bool HasPragmaNoCache(this WebHeaderCollection headers) {
-            return ((headers.Get("Pragma")?.IndexOf( "no-cache")) ?? -1) >= 0;
+            return ((headers.Get("Pragma")?.IndexOf("no-cache")) ?? -1) >= 0;
         }
         public static bool HasCacheControlNoStore(this WebHeaderCollection headers) {
             return ((headers.Get("Cache-Control")?.IndexOf("no-store")) ?? -1) >= 0;
         }
         public static bool IsSecure(this string url) {
-            return url.ToLower().StartsWith("https://");
+            return url.StartsWith("https://", true, null);
         }
         public static string ToHttp(this string url) {
             var uriBuilder = new UriBuilder(url) {
@@ -51,22 +49,14 @@ namespace OAuch.Protocols.Http {
         public static string GetName(this SslProtocols? protocol) {
             if (protocol == null)
                 return "unknown";
-            switch (protocol.Value) {
-#pragma warning disable CS0618 // Type or member is obsolete
-                case SslProtocols.Ssl3:
-#pragma warning restore CS0618 // Type or member is obsolete
-                    return "SSL 3.0";
-                case SslProtocols.Tls:
-                    return "TLS 1.0";
-                case SslProtocols.Tls11:
-                    return "TLS 1.1";
-                case SslProtocols.Tls12:
-                    return "TLS 1.2";
-                case SslProtocols.Tls13:
-                    return "TLS 1.3";
-                default:
-                    return "unknown";
-            }
+            return protocol.Value switch {
+                SslProtocols.Ssl3 => "SSL 3.0",
+                SslProtocols.Tls => "TLS 1.0",
+                SslProtocols.Tls11 => "TLS 1.1",
+                SslProtocols.Tls12 => "TLS 1.2",
+                SslProtocols.Tls13 => "TLS 1.3",
+                _ => "unknown",
+            };
         }
     }
 }

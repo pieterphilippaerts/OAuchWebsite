@@ -29,6 +29,7 @@
                 return "Other";
         }
     }
+    #pragma warning disable CS8602
 }
 <div class="row">
     <div class="col-12 col-lg-10 col-xl-8">
@@ -350,7 +351,7 @@
                                 <label>Standard Documents</label>
                                 <select id="Settings_SelectedStandards" name="Settings.SelectedStandards" class="selectpicker show-tick" data-width="100%" multiple="multiple">
                                     @{
-                                        var docCats = new DocumentCategories[] { DocumentCategories.OAuth2, DocumentCategories.OpenIDConnect, DocumentCategories.Draft };
+                                        var docCats = new DocumentCategories[] { DocumentCategories.OAuth2, DocumentCategories.OpenIDConnect, DocumentCategories.Draft, DocumentCategories.Other };
                                     }
                                     @foreach (var c in docCats) {
                                         <optgroup label="@ToString(c)">
@@ -389,6 +390,9 @@
         }
     </div>
 </div>
+@{
+        #pragma warning restore CS8602
+}
 @section Styles {
     <link href="/plugins/bootstrap4-toggle/css/bootstrap4-toggle.min.css" rel="stylesheet">
     <link rel="stylesheet" href="/plugins/ion-rangeslider/css/ion.rangeSlider.min.css">

@@ -4,6 +4,7 @@ using OAuch.Shared;
 using OAuch.Shared.Enumerations;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -20,21 +21,22 @@ namespace OAuch.Compliance.Tests.Features {
         public override Type ResultType => typeof(HasSupportedFlowsTestResult);
     }
     public class HasSupportedFlowsTestResult : TestResult<HasSupportedFlowsTestInfo> {
-        public HasSupportedFlowsTestResult(string testId) : base(testId) {}
+        public HasSupportedFlowsTestResult(string testId) : base(testId) { }
         public override Type ImplementationType => typeof(HasSupportedFlowsTestImplementation);
 
+        [MemberNotNull(nameof(_factories))]
         private void InitializeFactories() {
             if (_factories != null)
                 return;
-            
-            _factories = new List<TokenProviderFactory>();
+
+            _factories = [];
             if (this.ExtraInfo != null && this.ExtraInfo.WorkingProviders != null) {
                 foreach (var providerInfo in this.ExtraInfo.WorkingProviders) {
                     _factories.Add(new TokenProviderFactory(providerInfo));
                 }
             }
         }
-        private List<TokenProviderFactory> _factories;
+        private List<TokenProviderFactory>? _factories;
 
         public bool HasAccessTokens {
             get {
@@ -102,7 +104,7 @@ namespace OAuch.Compliance.Tests.Features {
             return null;
         }
         public TokenProvider? CreateProviderWithStage<TProcessor, TIn, TOut>(TestRunContext context, Func<TokenProviderFactory, TokenProvider, bool>? extraValidator = null, bool mustHaveAccessTokens = true, bool mustHaveRefresh = false, bool mustHaveJwtTokens = false, bool mustHaveIdTokens = false, bool mustHaveCodes = false) where TProcessor : Processor<TIn, TOut> {
-            return CreateProvider(context, 
+            return CreateProvider(context,
                 (f, p) => p.Pipeline.HasProcessor<TProcessor>() && (extraValidator == null || extraValidator(f, p)),
                 mustHaveAccessTokens, mustHaveRefresh, mustHaveJwtTokens, mustHaveIdTokens, mustHaveCodes);
         }
@@ -116,13 +118,11 @@ namespace OAuch.Compliance.Tests.Features {
             return ret;
         }
     }
-    public class HasSupportedFlowsTestInfo { 
+    public class HasSupportedFlowsTestInfo {
         public List<TokenProviderInfo>? WorkingProviders { get; set; }
     }
     public class HasSupportedFlowsTestImplementation : TestImplementation<HasSupportedFlowsTestInfo> {
-#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
         public HasSupportedFlowsTestImplementation(TestRunContext context, HasSupportedFlowsTestResult result, TokenFlowSupportedTestResult tokenFlow, IdTokenTokenFlowSupportedTestResult tokenIdTokenFlow, IdTokenFlowSupportedTestResult idTokenFlow, CodeFlowSupportedTestResult code, CodeTokenFlowSupportedTestResult codeToken, CodeIdTokenFlowSupportedTestResult codeIdToken, CodeIdTokenTokenFlowSupportedTestResult codeIdTokenToken, ClientCredentialsFlowSupportedTestResult clientCredentials, PasswordFlowSupportedTestResult password, DeviceFlowSupportedTestResult device) : base(context, result, tokenFlow, tokenIdTokenFlow, idTokenFlow, code, codeToken, codeIdToken, codeIdTokenToken, clientCredentials, password, device) { }
-#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
         public override Task Run() {
             var allProviderResults = new TestResult<TokenProviderInfo>?[] {
                 GetDependency<TokenFlowSupportedTestResult>(true),              // token
@@ -146,7 +146,7 @@ namespace OAuch.Compliance.Tests.Features {
             Result.Outcome = workingProviders.Count > 0 ? TestOutcomes.SpecificationFullyImplemented : TestOutcomes.SpecificationNotImplemented;
 
             foreach (var providerInfo in workingProviders) {
-                LogInfo($"The { providerInfo.ExtraInfo!.Settings!.Name } is working ({ FormatFlow(providerInfo.ExtraInfo!) })");
+                LogInfo($"The {providerInfo.ExtraInfo!.Settings!.Name} is working ({FormatFlow(providerInfo.ExtraInfo!)})");
             }
 
             Context.Browser.SendFeatureDetected("at", workingProviders.Any(wp => wp.ExtraInfo!.HasAccessTokens));
@@ -156,7 +156,7 @@ namespace OAuch.Compliance.Tests.Features {
 
             return Task.CompletedTask;
 
-            string FormatFlow(TokenProviderInfo flow) {
+            static string FormatFlow(TokenProviderInfo flow) {
                 var sb = new StringBuilder();
                 if (flow.HasAccessTokens) {
                     if (flow.HasJwtAccessTokens) {

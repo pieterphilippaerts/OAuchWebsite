@@ -3,10 +3,7 @@ using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
-using System.Linq;
-using System.Runtime.CompilerServices;
 using System.Text;
-using System.Threading.Tasks;
 using System.Web;
 
 namespace OAuch.Shared {
@@ -99,12 +96,15 @@ namespace OAuch.Shared {
                 if (key != null) {
                     var values = form[key];
                     for (int i = 0; i < values.Count; i++) {
+                        var v = values[i];
+                        if (v == null)
+                            continue;
                         if (sb.Length > 0) {
                             sb.Append('&');
                         }
                         sb.Append(UrlEncode(key));
                         sb.Append('=');
-                        sb.Append(UrlEncode(values[i]));
+                        sb.Append(UrlEncode(v));
                     }
                 }
             }
@@ -133,8 +133,11 @@ namespace OAuch.Shared {
         public static Dictionary<string, string> ToDictionary(this NameValueCollection col) {
             var dict = new Dictionary<string, string>();
             foreach (var k in col.AllKeys) {
-                if (k != null)
-                    dict.Add(k, col[k]);
+                if (k != null) {
+                    var c = col[k];
+                    if (c != null)
+                        dict.Add(k, c);
+                }
             }
             return dict;
         }
@@ -148,7 +151,7 @@ namespace OAuch.Shared {
                         string? val = kv.Value?.ToObject<string?>();
                         if (val != null)
                             dict[kv.Key] = val;
-                    } catch { 
+                    } catch {
                         // couldn't convert to string; server uses some unsupported JSon structure
                     }
                 }
