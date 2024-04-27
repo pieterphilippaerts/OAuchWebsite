@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.SignalR;
 using OAuch.Compliance;
 using OAuch.Compliance.Tests;
+using OAuch.Controllers;
 using OAuch.Shared.Enumerations;
 using OAuch.TestRuns;
 using System;

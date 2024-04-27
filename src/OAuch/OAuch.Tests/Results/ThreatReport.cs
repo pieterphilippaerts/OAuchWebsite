@@ -67,7 +67,7 @@ namespace OAuch.Compliance.Results {
         /// <b>true</b> if the threat instance is considered to be relevant for the test set, <b>false</b> otherwise.
         /// If the test set contains tests that haven't been executed yet or that have failed, the result is <b>null</b>.
         /// </summary>
-        private bool? IsInstanceRelevant(IEnumerable<TestResult> results, ThreatInstance instance) {
+        private static bool? IsInstanceRelevant(IEnumerable<TestResult> results, ThreatInstance instance) {
             bool? ret = false;
             foreach (var feat in instance.DependsOnFeatures) {
                 var result = results.Where(r => r.TestId == feat.TestId).FirstOrDefault();
@@ -84,7 +84,7 @@ namespace OAuch.Compliance.Results {
         /// <summary>
         /// Check if there is any TestCombination that mitigates the threat instance
         /// </summary>
-        private TestOutcomes? CalculateThreatInstanceOutcome(IEnumerable<TestResult> results, List<TestCombination> mitigations) {
+        private static TestOutcomes? CalculateThreatInstanceOutcome(IEnumerable<TestResult> results, List<TestCombination> mitigations) {
             if (mitigations.Count == 0) // there are no mitigations for this threat; if it is relevant (i.e., if the preconditions are met, the implementation is vulnerable)
                 return TestOutcomes.SpecificationNotImplemented;
 
@@ -120,7 +120,7 @@ namespace OAuch.Compliance.Results {
         /// <summary>
         /// Check if every test in the TestCombination succeeds
         /// </summary>
-        public TestOutcomes? CalculateCombinationOutcome(TestCombination combination, IEnumerable<TestResult> results) {
+        public static TestOutcomes? CalculateCombinationOutcome(TestCombination combination, IEnumerable<TestResult> results) {
             int partials = 0, full = 0, not = 0, skipped = 0;
             foreach (var test in combination) {
                 var result = results.Where(r => r.TestId == test.TestId).FirstOrDefault();

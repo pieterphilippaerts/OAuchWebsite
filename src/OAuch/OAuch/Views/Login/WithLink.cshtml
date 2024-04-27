@@ -3,9 +3,9 @@
 @{
     ViewData["Title"] = "Create Login Link";
 
-    string GetCaptchaSiteKey() {
-        var secrets = ServiceLocator.Resolve<Secrets>()!;
-        return secrets.CaptchaSiteKey;
+    string? GetCaptchaSiteKey() {
+        var secrets = ServiceLocator.Resolve<Secrets>();
+        return secrets?.CaptchaSiteKey;
     }
 }
 <div class="row">
