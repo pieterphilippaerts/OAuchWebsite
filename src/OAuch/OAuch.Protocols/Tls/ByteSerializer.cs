@@ -1,8 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Security.Authentication;
-using System.Text;
 
 namespace OAuch.Protocols.Tls {
     public static class ByteSerializer {
@@ -27,14 +25,14 @@ namespace OAuch.Protocols.Tls {
                     ms.WriteByte((byte)(value & 0xFF));
                     break;
                 default:
-                    throw new ArgumentException();
+                    throw new ArgumentException("Value must be between 1 and 4", nameof(byteCount));
             }
         }
         public static int ReadInt(this MemoryStream ms, int byteCount) {
             int ret = 0;
             for (int i = 0; i < byteCount; i++) {
-                ret = ret << 8;
-                ret = ret | ms.ReadByte();
+                ret <<= 8;
+                ret |= ms.ReadByte();
             }
             return ret;
         }
@@ -67,21 +65,14 @@ namespace OAuch.Protocols.Tls {
             if (ms.ReadByte() != 0x03)
                 throw new NotSupportedException();
             var minor = ms.ReadByte();
-            switch (minor) {
-                case 0:
-                    return SslProtocols.Ssl3;
-                case 1:
-                    return SslProtocols.Tls;
-                case 2:
-                    return SslProtocols.Tls11;
-                case 3:
-                    return SslProtocols.Tls12;
-                case 4:
-                    return SslProtocols.Tls13;
-                default:
-                    throw new NotSupportedException();
-            }
+            return minor switch {
+                0 => SslProtocols.Ssl3,
+                1 => SslProtocols.Tls,
+                2 => SslProtocols.Tls11,
+                3 => SslProtocols.Tls12,
+                4 => SslProtocols.Tls13,
+                _ => throw new NotSupportedException(),
+            };
         }
-        
     }
 }

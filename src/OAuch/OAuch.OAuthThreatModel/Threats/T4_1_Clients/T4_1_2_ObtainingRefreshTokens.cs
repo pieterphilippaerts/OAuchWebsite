@@ -1,10 +1,5 @@
 ﻿using OAuch.OAuthThreatModel.Attackers;
 using OAuch.OAuthThreatModel.Consequences;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace OAuch.OAuthThreatModel.Threats.Clients {
     public class T4_1_2_ObtainingRefreshTokensFromWebApp : Threat {
@@ -21,6 +16,7 @@ namespace OAuch.OAuthThreatModel.Threats.Clients {
             "Use strong client authentication (e.g., client_assertion/client_token) so the attacker cannot obtain the client secret required to exchange the tokens"
             ];
         public override AttackerType[] Attackers => [AttackerTypes.SystemsAttacker];
+        public override InvolvedParty[] Parties => [InvolvedParty.Client];
     }
     public class T4_1_2_ObtainingRefreshTokensFromNativeClient : Threat {
         public override string Id => "6819_4_1_2";
@@ -36,6 +32,7 @@ namespace OAuch.OAuthThreatModel.Threats.Clients {
             "Utilize device lock to prevent unauthorized device access"
             ];
         public override AttackerType[] Attackers => [AttackerTypes.SystemsAttacker];
+        public override InvolvedParty[] Parties => [InvolvedParty.Client];
     }
     public class T4_1_2_ObtainingRefreshTokensByStealingDevice : Threat {
         public override string Id => "6819_4_1_2";
@@ -51,6 +48,7 @@ namespace OAuch.OAuthThreatModel.Threats.Clients {
             "Where a user knows the device has been stolen, they can revoke the affected tokens"
             ];
         public override AttackerType[] Attackers => [AttackerTypes.SystemsAttacker];
+        public override InvolvedParty[] Parties => [InvolvedParty.Client];
     }
     public class T4_1_2_ObtainingRefreshTokensByCloningDevice : Threat {
         public override string Id => "6819_4_1_2";
@@ -68,5 +66,6 @@ namespace OAuch.OAuthThreatModel.Threats.Clients {
             "Where a user knows the device has been cloned, they can use refresh token revocation"
             ];
         public override AttackerType[] Attackers => [AttackerTypes.SystemsAttacker];
+        public override InvolvedParty[] Parties => [InvolvedParty.Client];
     }
 }

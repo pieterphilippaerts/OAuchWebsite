@@ -1,15 +1,8 @@
 ﻿using OAuch.OAuthThreatModel.Attackers;
 using OAuch.OAuthThreatModel.Consequences;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace OAuch.OAuthThreatModel.Threats.TokenEndpoint
-{
-    public class T4_3_1_EavesdroppingAccessTokens : Threat
-    {
+namespace OAuch.OAuthThreatModel.Threats.TokenEndpoint {
+    public class T4_3_1_EavesdroppingAccessTokens : Threat {
         public override string Description => "Eavesdropping Access Tokens";
 
         public override string Id => "6819_4_3_1";
@@ -23,5 +16,6 @@ namespace OAuch.OAuthThreatModel.Threats.TokenEndpoint
             "If end-to-end confidentiality cannot be guaranteed, reducing scope and expiry time for access tokens can be used to reduce the damage in case of leaks."
             ];
         public override AttackerType[] Attackers => [AttackerTypes.NetworkAttacker];
+        public override InvolvedParty[] Parties => [InvolvedParty.TokenEndpoint];
     }
 }

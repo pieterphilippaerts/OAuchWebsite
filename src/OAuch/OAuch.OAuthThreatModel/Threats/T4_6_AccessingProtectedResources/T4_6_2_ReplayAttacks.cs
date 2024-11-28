@@ -1,10 +1,5 @@
 ﻿using OAuch.OAuthThreatModel.Attackers;
 using OAuch.OAuthThreatModel.Consequences;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace OAuch.OAuthThreatModel.Threats.AccessingProtectedResources {
     public class T4_6_2_ReplayAttacks : Threat {
@@ -21,5 +16,6 @@ namespace OAuch.OAuthThreatModel.Threats.AccessingProtectedResources {
             "The resource server could employ signed requests along with nonces and timestamps in order to uniquely identify requests"
             ];
         public override AttackerType[] Attackers => [AttackerTypes.NetworkAttacker];
+        public override InvolvedParty[] Parties => [InvolvedParty.ResourceServer];
     }
 }

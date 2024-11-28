@@ -7,11 +7,8 @@ using OAuch.Shared.Enumerations;
 using OAuch.Shared.Logging;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Net;
-using System.Security.Policy;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace OAuch.Helpers {
     public class HtmlLogFormatter {
@@ -19,7 +16,7 @@ namespace OAuch.Helpers {
             //
         }
 
-        public string ToHtml(Guid resultId, IEnumerable<TestResult> testResults, bool printVersion = false) {
+        public static string ToHtml(Guid resultId, IEnumerable<TestResult> testResults, bool printVersion = false) {
             var sb = new StringBuilder();
             var visitor = new HtmlVisitor(resultId, sb, printVersion);
             foreach (var e in testResults) {
@@ -27,7 +24,7 @@ namespace OAuch.Helpers {
             }
             return sb.ToString();
         }
-        public string ToHtml(Guid resultId, TestResult result, bool printVersion = false) {
+        public static string ToHtml(Guid resultId, TestResult result, bool printVersion = false) {
             var sb = new StringBuilder();
             var visitor = new HtmlVisitor(resultId, sb, printVersion);
             result.TestLog.Accept(visitor);
@@ -35,17 +32,17 @@ namespace OAuch.Helpers {
         }
 
         private class HtmlVisitor : ILogVisitor {
-            public HtmlVisitor(Guid resultId, StringBuilder output, bool printVersion) {                
+            public HtmlVisitor(Guid resultId, StringBuilder output, bool printVersion) {
                 _output = output;
                 _printVersion = printVersion;
                 _resultId = resultId;
             }
-            private StringBuilder _output;
-            private bool _printVersion;
-            private Guid _resultId;
+            private readonly StringBuilder _output;
+            private readonly bool _printVersion;
+            private readonly Guid _resultId;
 
             public static string CreateInfoBox(string titleText, string messageHtml, string background = "bg-warning", string icon = "fas fa-exclamation-triangle") {
-                return $"<div class=\"row justify-content-center\"><div class=\"col-12 col-md-10\"><div class=\"info-box { background }\"><span class=\"info-box-icon\"><i class=\"{ icon }\"></i></span><div class=\"info-box-content\"><p class=\"infotitle\">{ EncodingHelper.HtmlEncode(titleText) }</p><span>{ messageHtml }</span></div></div></div></div>";
+                return $"<div class=\"row justify-content-center\"><div class=\"col-12 col-md-10\"><div class=\"info-box {background}\"><span class=\"info-box-icon\"><i class=\"{icon}\"></i></span><div class=\"info-box-content\"><p class=\"infotitle\">{EncodingHelper.HtmlEncode(titleText)}</p><span>{messageHtml}</span></div></div></div></div>";
             }
             //public static string CreateExpandable(string titleText, string bodyHtml, string cardColor = "card-primary", string icon = "fas fa-cookie") {
             //    return $"<div class=\"row justify-content-center\"><div class=\"col-12 col-md-11\"><div class=\"card { cardColor } collapsed-card\"><div class=\"card-header\"><h3 class=\"card-title\"><i class=\"{ icon }\"></i>&nbsp;&nbsp;&nbsp;{ EncodingHelper.HtmlEncode(titleText) }</h3><div class=\"card-tools\"><button type=\"button\" class=\"btn btn-tool\" data-card-widget=\"collapse\"><i class=\"fas fa-plus\"></i></button></div></div><div class=\"card-body\" style=\"display: none;\">{ bodyHtml }</div></div></div></div>";
@@ -53,14 +50,14 @@ namespace OAuch.Helpers {
             //public static string CreateSmallBox(string titleText, string messageHtml, string background = "bg-info", string icon = "fas fa-phone-volume") {
             //    return $"<div class=\"row justify-content-center\"><div class=\"col-12 col-md-11\"><div class=\"small-box { background }\"><div class=\"inner\"><h3>{ titleText }</h3>{ messageHtml }</div><div class=\"icon\"><i class=\"{ icon }\"></i></div></div></div></div>";
             //}
-            public static string CreateTimelineItem(string titleText, string messageHtml, string background, string icon) {
-                return $"<div class=\"tic\"><i class=\"{ icon } { background }\"></i><div class=\"timeline-item\"><h3 class=\"timeline-header { background }\">{ EncodingHelper.HtmlEncode(titleText) }</h3><div class=\"timeline-body\">{ messageHtml }</div></div></div>";
+            public static string CreateTimelineItem(string titleText, string messageHtml, string background, string icon, string? subtitle = "") {
+                return $"<div class=\"tic\"><i class=\"{icon} {background}\"></i><div class=\"timeline-item\"><h3 class=\"timeline-header {background}\">{EncodingHelper.HtmlEncode(titleText)}{subtitle}</h3><div class=\"timeline-body\">{messageHtml}</div></div></div>";
             }
             public static string CreateTimelineItem(string titleText, string background, string icon) {
-                return $"<div class=\"tic\"><i class=\"{ icon } { background }\"></i><div class=\"timeline-item\"><h3 class=\"timeline-header { background }\">{ EncodingHelper.HtmlEncode(titleText) }</h3></div></div>";
+                return $"<div class=\"tic\"><i class=\"{icon} {background}\"></i><div class=\"timeline-item\"><h3 class=\"timeline-header {background}\">{EncodingHelper.HtmlEncode(titleText)}</h3></div></div>";
             }
             public static string CreateTimelineHeader(string titleText, string background) {
-                return $"<div class=\"time-label\"><span class=\"{ background }\">{ EncodingHelper.HtmlEncode(titleText) }</span></div>";
+                return $"<div class=\"time-label\"><span class=\"{background}\">{EncodingHelper.HtmlEncode(titleText)}</span></div>";
             }
 
             //public override void VisitAuthorizationCode(AuthorizationCodeLogEntry e) {
@@ -72,8 +69,8 @@ namespace OAuch.Helpers {
                 if (e.FormData == "")
                     postData = "The request did not contain POST parameters.";
                 else
-                    postData = $"The request contained the following post parameters: <code>{ EncodingHelper.HtmlEncode(e.FormData) }</code>";
-                _output.Append(CreateTimelineItem("Callback received", $"<p>A callback was received from the OAuth provider at the URL <code>{ EncodingHelper.HtmlEncode(e.Url) }</code></p><p>{ postData }</p>", "bg-gray", "fas fa-phone-volume"));
+                    postData = $"The request contained the following post parameters: <code>{EncodingHelper.HtmlEncode(e.FormData)}</code>";
+                _output.Append(CreateTimelineItem("Callback received", $"<p>A callback was received from the OAuth provider at the URL <code>{EncodingHelper.HtmlEncode(e.Url)}</code></p><p>{postData}</p>", "bg-gray", "fas fa-phone-volume"));
             }
 
             public void Visit(LoggedCertificateReport e) {
@@ -85,10 +82,10 @@ namespace OAuch.Helpers {
             public void Visit(LoggedException e) {
                 _output.Append(CreateInfoBox("Unexpected error...", GetExceptionDescription(e)));
             }
-            private string GetExceptionDescription(LoggedException e) {
-                var desc = $"An unexpected error occurred while performing the test. The system returned the message: <em>`{ EncodingHelper.HtmlEncode(e.Message ?? "(none)") }'</em>. The final result of the test may not be correctly determined.";
+            private static string GetExceptionDescription(LoggedException e) {
+                var desc = $"An unexpected error occurred while performing the test. The system returned the message: <em>`{EncodingHelper.HtmlEncode(e.Message ?? "(none)")}'</em>. The final result of the test may not be correctly determined.";
                 if (e.InnerException != null) {
-                    StringBuilder messageTrace = new StringBuilder();
+                    var messageTrace = new StringBuilder();
                     messageTrace.Append("<br/>");
                     LoggedException? ex = e;
                     var spaces = 0;
@@ -104,26 +101,30 @@ namespace OAuch.Helpers {
                         ex = ex.InnerException;
                         spaces += 2;
                     }
-                    desc = desc + messageTrace.ToString();
+                    desc += messageTrace.ToString();
                 }
                 return desc;
             }
 
-            public  void Visit(LoggedHttpRequest e) {
+            public void Visit(LoggedHttpRequest e) {
                 var url = e.Url;
                 if (url.Length > 90) {
-                    url = url.Substring(0, 90) + "…";
+                    url = url[..90] + "…";
                 }
-                _output.Append(CreateTimelineItem($"HTTP { e.Method } { url }", "<pre>" + EncodingHelper.HtmlEncode(e.Request) + "</pre>", "bg-blue", "fas fa-upload"));
+                _output.Append(CreateTimelineItem($"HTTP {e.Method} {url}", "<pre>" + EncodingHelper.HtmlEncode(e.Request) + "</pre>", "bg-blue", "fas fa-upload"));
             }
 
             public void Visit(LoggedHttpResponse e) {
                 var statusCode = (HttpStatusCode)e.StatusCode;
                 var response = e.Response;
                 if (response.Length > 16384 /*&& _printVersion*/) {
-                    response = response.Substring(0, 16384) + "… HTTP RESPONSE CLIPPED …";
+                    response = response[..16384] + "… HTTP RESPONSE CLIPPED …";
                 }
-                _output.Append(CreateTimelineItem($"HTTP { e.StatusCode } { Enum.GetName(typeof(HttpStatusCode), statusCode) }", "<pre>" + EncodingHelper.HtmlEncode(response) + "</pre>", statusCode.IsError() ? "bg-red" : "bg-green", "fas fa-download"));
+                string? st = null;
+                if (e.Origin != null) {
+                    st = $" <small><em>(from {e.Origin})</em></small>";
+                }
+                _output.Append(CreateTimelineItem($"HTTP {e.StatusCode} {Enum.GetName(typeof(HttpStatusCode), statusCode)}", "<pre>" + EncodingHelper.HtmlEncode(response) + "</pre>", statusCode.IsError() ? "bg-red" : "bg-green", "fas fa-download", st));
             }
 
             public void Visit(LoggedString e) {
@@ -139,13 +140,13 @@ namespace OAuch.Helpers {
             }
 
             public void Visit(LoggedRedirect e) {
-                _output.Append(CreateTimelineItem("Redirecting pop-up", $"<p>The pop-up window is being redirected to <code>{ EncodingHelper.HtmlEncode(e.Url) }</code></p>", "bg-gray", "fas fa-directions"));
+                _output.Append(CreateTimelineItem("Redirecting pop-up", $"<p>The pop-up window is being redirected to <code>{EncodingHelper.HtmlEncode(e.Url)}</code></p>", "bg-gray", "fas fa-directions"));
             }
 
             public void Visit(LoggedTest e) {
                 string title = e.TestId;
                 //string failedDesc = "";
-                
+
                 if (e.TestId != null && ComplianceDatabase.Tests.TryGetValue(e.TestId, out var test)) {
                     title = test.Title;
 
@@ -153,9 +154,9 @@ namespace OAuch.Helpers {
 
                 string collapsible = "";
                 if (!_printVersion) {
-                    collapsible = $"<div class=\"card collapsed-card\"><div class=\"card-header bg-lightgray\"><div class=\"card-tools leftcardtools\"><button type=\"button\" class=\"btn btn-tool\" data-card-widget=\"collapse\"><i class=\"fas fa-plus\"></i></button></div><h3 class=\"card-title\">Test <strong>`{ HelperMethods.ShortenTestId(e.TestId) }'</strong> [<a href=\"/Dashboard/Resume/{ _resultId }?retry={ e.TestId }\">retry</a>]<br/><em>{ title }?</em></h3></div><div class=\"card-body\" style=\"display: none;\">";
+                    collapsible = $"<div class=\"card collapsed-card\"><div class=\"card-header bg-lightgray\"><div class=\"card-tools leftcardtools\"><button type=\"button\" class=\"btn btn-tool\" data-card-widget=\"collapse\"><i class=\"fas fa-plus\"></i></button></div><h3 class=\"card-title\">Test <strong>`{HelperMethods.ShortenTestId(e.TestId)}'</strong> [<a href=\"/Dashboard/Resume/{_resultId}?retry={e.TestId}\">retry</a>]<br/><em>{title}?</em></h3></div><div class=\"card-body\" style=\"display: none;\">";
                 }
-                _output.Append(collapsible + $"<div class=\"timeline\">" + CreateTimelineHeader($"Test `{ HelperMethods.ShortenTestId(e.TestId) }' started", "bg-gray"));
+                _output.Append(collapsible + $"<div class=\"timeline\">" + CreateTimelineHeader($"Test `{HelperMethods.ShortenTestId(e.TestId)}' started", "bg-gray"));
                 if (e.Children != null) {
                     foreach (var c in e.Children) {
                         c.Accept(this);
@@ -165,7 +166,7 @@ namespace OAuch.Helpers {
                 if (e.HasThrown) {
                     collapsibleEnd = _printVersion ? "" : "</div></div>";
                     _output.Append(CreateTimelineItem("An unexpected error occurred", "bg-red", "fas fa-bomb")
-                        + CreateTimelineHeader($"Test `{ HelperMethods.ShortenTestId(e.TestId) }' finished", "bg-gray")
+                        + CreateTimelineHeader($"Test `{HelperMethods.ShortenTestId(e.TestId)}' finished", "bg-gray")
                         + "</div>" /* timeline */
                         + collapsibleEnd);
                 } else {
@@ -173,35 +174,35 @@ namespace OAuch.Helpers {
                     if (e.Outcome == null) {
                         icon = "fas fa-question";
                         bg = "bg-gray";
-                        text = $"Test '{ HelperMethods.ShortenTestId(e.TestId) }' has not been executed yet.";
+                        text = $"Test '{HelperMethods.ShortenTestId(e.TestId)}' has not been executed yet.";
                         ribbon = "<div class=\"ribbon-wrapper\"><div class=\"ribbon bg-gray\">PLANNED</div></div>";
                     } else if (e.Outcome == TestOutcomes.Failed) {
                         icon = "fas fa-bomb";
                         bg = "bg-gray";
-                        text = $"Test '{ HelperMethods.ShortenTestId(e.TestId) }' has crashed while executing.";
+                        text = $"Test '{HelperMethods.ShortenTestId(e.TestId)}' has crashed while executing.";
                         ribbon = "<div class=\"ribbon-wrapper\"><div class=\"ribbon bg-gray\">CRASHED</div></div>";
                     } else if (e.Outcome == TestOutcomes.Skipped) {
                         icon = "fas fa-question";
                         bg = "bg-gray";
-                        text = $"Test '{ HelperMethods.ShortenTestId(e.TestId) }' was skipped because a precondition wasn't met.";
+                        text = $"Test '{HelperMethods.ShortenTestId(e.TestId)}' was skipped because a precondition wasn't met.";
                         ribbon = "<div class=\"ribbon-wrapper\"><div class=\"ribbon bg-gray\">SKIPPED</div></div>";
                     } else if (e.Outcome == TestOutcomes.SpecificationNotImplemented) {
                         icon = "fas fa-times";
                         bg = "bg-red";
-                        text = $"Test '{ HelperMethods.ShortenTestId(e.TestId) }' was executed and failed.";
+                        text = $"Test '{HelperMethods.ShortenTestId(e.TestId)}' was executed and failed.";
                         //if (failedDesc != "")
                         //    additionalItem = CreateTimelineItem(failedDesc, "bg-info", "fas fa-info");
                         ribbon = "<div class=\"ribbon-wrapper\"><div class=\"ribbon bg-red\">FAILED</div></div>";
                     } else {
                         icon = "fas fa-check";
                         bg = "bg-green";
-                        text = $"Test '{ HelperMethods.ShortenTestId(e.TestId) }' was executed and { (e.Outcome == TestOutcomes.SpecificationPartiallyImplemented ? "partially " : "") }succeeded.";
+                        text = $"Test '{HelperMethods.ShortenTestId(e.TestId)}' was executed and {(e.Outcome == TestOutcomes.SpecificationPartiallyImplemented ? "partially " : "")}succeeded.";
                         ribbon = "<div class=\"ribbon-wrapper\"><div class=\"ribbon bg-green\">SUCCESS</div></div>";
                     }
                     collapsibleEnd = _printVersion ? "" : "</div>" + ribbon + "</div>";
                     _output.Append(CreateTimelineItem(text, bg, icon)
                         + additionalItem
-                        + CreateTimelineHeader($"Test `{ HelperMethods.ShortenTestId(e.TestId) }' finished", "bg-gray")
+                        + CreateTimelineHeader($"Test `{HelperMethods.ShortenTestId(e.TestId)}' finished", "bg-gray")
                         + "</div>" /* timeline */
                         + collapsibleEnd);
                 }

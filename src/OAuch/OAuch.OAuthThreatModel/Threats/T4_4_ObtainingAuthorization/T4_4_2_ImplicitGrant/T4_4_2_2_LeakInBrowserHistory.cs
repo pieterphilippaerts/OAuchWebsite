@@ -1,10 +1,5 @@
 ﻿using OAuch.OAuthThreatModel.Attackers;
 using OAuch.OAuthThreatModel.Consequences;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace OAuch.OAuthThreatModel.Threats.ObtainingAuthorization.ImplicitGrant {
     public class T4_4_2_2_LeakInBrowserHistory : Threat {
@@ -21,5 +16,6 @@ namespace OAuch.OAuthThreatModel.Threats.ObtainingAuthorization.ImplicitGrant {
             "Make responses non-cacheable"
             ];
         public override AttackerType[] Attackers => [AttackerTypes.SystemsAttacker];
+        public override InvolvedParty[] Parties => [InvolvedParty.UserAgent];
     }
 }

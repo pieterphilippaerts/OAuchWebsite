@@ -1,10 +1,5 @@
 ﻿using OAuch.OAuthThreatModel.Attackers;
 using OAuch.OAuthThreatModel.Consequences;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace OAuch.OAuthThreatModel.Threats.ObtainingAuthorization.ClientCredentials {
     public class T4_4_4_2_EscalatedScope : Threat {
@@ -21,5 +16,6 @@ namespace OAuch.OAuthThreatModel.Threats.ObtainingAuthorization.ClientCredential
             "The authorization server could notify the resource owner by an appropriate medium of the grant issued"
             ];
         public override AttackerType[] Attackers => [AttackerTypes.WebAttacker];
+        public override InvolvedParty[] Parties => [InvolvedParty.TokenEndpoint];
     }
 }

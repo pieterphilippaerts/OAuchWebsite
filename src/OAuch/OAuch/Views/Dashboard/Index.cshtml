@@ -4,8 +4,8 @@
 @{
     ViewData["Title"] = "Site dashboard";
 }
-<h1 class="display-4">OAuch dashboard</h1>
-@if (Model.Sites.Count == 0) {
+<h1 class="display-4">Site dashboard</h1>
+@if (Model.Sites == null || Model.Sites.Count == 0) {
     <div class="row">
         <div class="col-xl-8">
             <p>

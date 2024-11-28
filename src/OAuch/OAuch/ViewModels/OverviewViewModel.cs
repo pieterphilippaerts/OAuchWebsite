@@ -1,8 +1,6 @@
 ﻿using OAuch.Database.Entities;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace OAuch.ViewModels {
     public class OverviewViewModel : IMenuInformation {
@@ -11,8 +9,8 @@ namespace OAuch.ViewModels {
         public PageType PageType { get; set; }
 
 
-        public Guid SiteId { get; set; }
-        public string SiteName { get; set; }
+        public required Guid SiteId { get; set; }
+        public required string SiteName { get; set; }
         //public DateTime? LatestResult { get; set; }
         public SettingsStatus AuthorizationUri { get; set; }
         public SettingsStatus TokenUri { get; set; }

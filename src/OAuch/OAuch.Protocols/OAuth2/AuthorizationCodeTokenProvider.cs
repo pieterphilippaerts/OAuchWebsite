@@ -1,25 +1,16 @@
-﻿using OAuch.Protocols.Http;
-using OAuch.Protocols.OAuth2.BuildingBlocks;
+﻿using OAuch.Protocols.OAuth2.BuildingBlocks;
 using OAuch.Protocols.OAuth2.Pipeline;
 using OAuch.Shared;
 using OAuch.Shared.Enumerations;
-using OAuch.Shared.Interfaces;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace OAuch.Protocols.OAuth2 {
     public class AuthorizationCodeTokenProvider : TokenProvider {
-        public AuthorizationCodeTokenProvider(TokenProviderSettings settings, TestRunContext context) : base(settings, context) {            
+        public AuthorizationCodeTokenProvider(TokenProviderSettings settings, TestRunContext context) : base(settings, context) {
             //
         }
         public string CodeVerifier {
             get {
-                if (_codeVerifier == null) {
-                    _codeVerifier = OAuthHelper.GenerateCodeVerifier();
-                }
+                _codeVerifier ??= OAuthHelper.GenerateCodeVerifier();
                 return _codeVerifier;
             }
             set {

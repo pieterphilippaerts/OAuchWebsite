@@ -1,10 +1,5 @@
 ﻿using OAuch.OAuthThreatModel.Attackers;
 using OAuch.OAuthThreatModel.Consequences;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace OAuch.OAuthThreatModel.Threats.RefreshingAccessTokens {
     public class T4_5_4_RefreshTokenPhishing : Threat {
@@ -20,5 +15,6 @@ namespace OAuch.OAuthThreatModel.Threats.RefreshingAccessTokens {
             "Utilize server authentication"
             ];
         public override AttackerType[] Attackers => [AttackerTypes.NetworkAttacker];
+        public override InvolvedParty[] Parties => [InvolvedParty.TokenEndpoint];
     }
 }

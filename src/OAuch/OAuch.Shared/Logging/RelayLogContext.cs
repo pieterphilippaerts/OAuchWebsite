@@ -1,8 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace OAuch.Shared.Logging {
     public class RelayLogContext : LogContext {
@@ -11,7 +8,7 @@ namespace OAuch.Shared.Logging {
         }
 
         public override DateTime CreatedAt => RelayContext?.CreatedAt ?? DateTime.Now;
-        public override IList<LoggedItem> Children => RelayContext?.Children;
+        public override IList<LoggedItem> Children => RelayContext?.Children ?? [];
 
         public override void Log(string? message, LoggedStringTypes type = LoggedStringTypes.Info) {
             RelayContext?.Log(message, type);

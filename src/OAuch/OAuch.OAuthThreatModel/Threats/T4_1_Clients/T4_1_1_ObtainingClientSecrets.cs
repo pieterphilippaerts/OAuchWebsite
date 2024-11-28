@@ -1,10 +1,5 @@
 ﻿using OAuch.OAuthThreatModel.Attackers;
 using OAuch.OAuthThreatModel.Consequences;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace OAuch.OAuthThreatModel.Threats.Clients {
     public class T4_1_1_ObtainingClientSecretsFromApp : Threat {
@@ -24,6 +19,7 @@ namespace OAuch.OAuthThreatModel.Threats.Clients {
             ];
 
         public override AttackerType[] Attackers => [AttackerTypes.SystemsAttacker];
+        public override InvolvedParty[] Parties => [InvolvedParty.Client];
     }
     public class T4_1_1_ObtainingDeploymentSecrets : Threat {
         public override string Id => "6819_4_1_1";
@@ -40,5 +36,6 @@ namespace OAuch.OAuthThreatModel.Threats.Clients {
             "Revoke client secrets"
             ];
         public override AttackerType[] Attackers => [AttackerTypes.SystemsAttacker];
+        public override InvolvedParty[] Parties => [InvolvedParty.Client];
     }
 }

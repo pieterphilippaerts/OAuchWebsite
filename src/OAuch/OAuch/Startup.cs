@@ -1,29 +1,24 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.HttpsPolicy;
+using Microsoft.AspNetCore.ResponseCompression;
+using Microsoft.AspNetCore.Rewrite;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using OAuch.Database;
+using OAuch.Helpers;
+using OAuch.Hubs;
 using OAuch.LogConverters;
 using OAuch.Protocols.Http;
 using OAuch.Protocols.JWK;
 using OAuch.Protocols.JWT;
-using OAuch.Shared.Logging;
-using OAuch.Helpers;
-using OAuch.Database;
-using OAuch.Hubs;
-using OAuch.TestRuns;
 using OAuch.Protocols.OAuth2;
-using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.AspNetCore.Rewrite;
 using OAuch.Shared.Interfaces;
 using OAuch.Workers;
 using Microsoft.AspNetCore.ResponseCompression;
 using System.IO.Compression;
+using System.Linq;
 
 namespace OAuch {
     public class Startup {

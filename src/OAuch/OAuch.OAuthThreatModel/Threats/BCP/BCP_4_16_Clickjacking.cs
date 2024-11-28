@@ -1,10 +1,5 @@
 ﻿using OAuch.OAuthThreatModel.Attackers;
 using OAuch.OAuthThreatModel.Consequences;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace OAuch.OAuthThreatModel.Threats.BCP {
     public class BCP_4_16_ClickjackingAC : Threat {
@@ -22,6 +17,7 @@ namespace OAuch.OAuthThreatModel.Threats.BCP {
             "JavaScript frame-busting techniques can be used but may not be effective in all browsers"
             ];
         public override AttackerType[] Attackers => [AttackerTypes.WebAttacker];
+        public override InvolvedParty[] Parties => [InvolvedParty.AuthorizationEndpoint];
     }
     public class BCP_4_16_ClickjackingTiFC : Threat {
         public override string Id => "BCP_4_16";
@@ -38,5 +34,6 @@ namespace OAuch.OAuthThreatModel.Threats.BCP {
             "JavaScript frame-busting techniques can be used but may not be effective in all browsers"
             ];
         public override AttackerType[] Attackers => [AttackerTypes.WebAttacker];
+        public override InvolvedParty[] Parties => [InvolvedParty.AuthorizationEndpoint];
     }
 }

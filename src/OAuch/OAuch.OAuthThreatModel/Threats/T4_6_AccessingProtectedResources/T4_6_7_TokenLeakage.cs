@@ -1,10 +1,5 @@
 ﻿using OAuch.OAuthThreatModel.Attackers;
 using OAuch.OAuthThreatModel.Consequences;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace OAuch.OAuthThreatModel.Threats.AccessingProtectedResources {
     public class T4_6_7_TokenLeakage : Threat {
@@ -24,5 +19,6 @@ namespace OAuch.OAuthThreatModel.Threats.AccessingProtectedResources {
             "The impact of token leakage may be reduced by limiting scope and duration and by enforcing one-time token usage",
             ];
         public override AttackerType[] Attackers => [AttackerTypes.WebAttacker, AttackerTypes.SystemsAttacker];
+        public override InvolvedParty[] Parties => [InvolvedParty.ResourceServer];
     }
 }

@@ -1,10 +1,5 @@
 ﻿using OAuch.OAuthThreatModel.Attackers;
 using OAuch.OAuthThreatModel.Consequences;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace OAuch.OAuthThreatModel.Threats.ObtainingAuthorization.AuthorizationCode {
     public class T4_4_1_11_DoSAttacks : Threat {
@@ -21,5 +16,6 @@ namespace OAuch.OAuthThreatModel.Threats.ObtainingAuthorization.AuthorizationCod
             "The authorization server should include a nontrivial amount of entropy in authorization \"codes\""
             ];
         public override AttackerType[] Attackers => [AttackerTypes.NetworkAttacker, AttackerTypes.WebAttacker];
+        public override InvolvedParty[] Parties => [InvolvedParty.AuthorizationEndpoint, InvolvedParty.TokenEndpoint];
     }
 }

@@ -2,10 +2,6 @@
 using OAuch.Compliance.Tests.Shared;
 using OAuch.Shared;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace OAuch.Compliance.Tests.Tokens {
     public class AuthorizationCodeEntropySugReqTest : Test {
@@ -17,6 +13,13 @@ namespace OAuch.Compliance.Tests.Tokens {
     public class AuthorizationCodeEntropySugReqTestResult : TestResult<EntropyInfo> {
         public AuthorizationCodeEntropySugReqTestResult(string testId) : base(testId) { }
         public override Type ImplementationType => typeof(AuthorizationCodeEntropySugReqTestImplementation);
+        public override float? ImplementationScore {
+            get {
+                if (ExtraInfo?.AverageEntropy == null)
+                    return base.ImplementationScore;
+                return Math.Min((float)(ExtraInfo.AverageEntropy.Value / 160f), 1f);
+            }
+        }
     }
     public class AuthorizationCodeEntropySugReqTestImplementation : EntropyTestImplementationBase {
         public AuthorizationCodeEntropySugReqTestImplementation(TestRunContext context, AuthorizationCodeEntropySugReqTestResult result, AuthorizationCodeEntropyMinReqTestResult min, HasSupportedFlowsTestResult supportedFlows)

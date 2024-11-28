@@ -1,13 +1,10 @@
 ﻿using OAuch.Compliance.Tests.Features;
 using OAuch.Protocols.OAuth2;
-using OAuch.Protocols.OAuth2.BuildingBlocks;
 using OAuch.Protocols.OAuth2.Pipeline;
 using OAuch.Shared;
 using OAuch.Shared.Enumerations;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace OAuch.Compliance.Tests.Pkce {
@@ -43,16 +40,13 @@ namespace OAuch.Compliance.Tests.Pkce {
                 return;
             }
 
-            var pkceContext = this.Context with
-            {
-                SiteSettings = this.Context.SiteSettings with
-                {
+            var pkceContext = this.Context with {
+                SiteSettings = this.Context.SiteSettings with {
                     PKCEDefault = selectedPkceType
                 }
             };
 
-            var provider = flows.CreateProvider(pkceContext, (fact, prov) => prov.FlowType == OAuthHelper.CODE_FLOW_TYPE) as AuthorizationCodeTokenProvider;
-            if (provider == null) {
+            if (flows.CreateProvider(pkceContext, (fact, prov) => prov.FlowType == OAuthHelper.CODE_FLOW_TYPE) is not AuthorizationCodeTokenProvider provider) {
                 Result.Outcome = TestOutcomes.Skipped;
                 LogInfo("The authorization code grant is not working");
                 return;

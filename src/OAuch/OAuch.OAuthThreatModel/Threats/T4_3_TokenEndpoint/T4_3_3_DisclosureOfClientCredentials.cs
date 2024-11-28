@@ -1,15 +1,8 @@
 ﻿using OAuch.OAuthThreatModel.Attackers;
 using OAuch.OAuthThreatModel.Consequences;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace OAuch.OAuthThreatModel.Threats.TokenEndpoint
-{
-    public class T4_3_3_DisclosureOfClientCredentials : Threat
-    {
+namespace OAuch.OAuthThreatModel.Threats.TokenEndpoint {
+    public class T4_3_3_DisclosureOfClientCredentials : Threat {
         public override string Description => "Disclosure of Client Credentials during Transmission";
 
         public override string Id => "6819_4_3_3";
@@ -23,5 +16,6 @@ namespace OAuch.OAuthThreatModel.Threats.TokenEndpoint
             "Use alternative authentication means that do not require the sending of plaintext credentials over the wire"
             ];
         public override AttackerType[] Attackers => [AttackerTypes.NetworkAttacker];
+        public override InvolvedParty[] Parties => [InvolvedParty.TokenEndpoint];
     }
 }

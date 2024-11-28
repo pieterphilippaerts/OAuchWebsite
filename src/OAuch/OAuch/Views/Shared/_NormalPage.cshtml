@@ -7,7 +7,7 @@
     if (ViewData["Title"] == null)
         title = "OAuch";
     else
-        title = ViewData["Title"].ToString() + " - OAuch";
+        title = (ViewData["Title"]?.ToString() ?? "<Selected Site>") + " - OAuch";
 
     bool isAuthenticated = this.User?.Identity?.IsAuthenticated ?? false;
     var menuInfo = this.Model as IMenuInformation;
@@ -89,6 +89,9 @@
                     </li>
                 }
                 <li class="nav-item d-none d-sm-inline-block">
+                    <a href="/Documents" class="nav-link">Standards</a>
+                </li>
+                <li class="nav-item d-none d-sm-inline-block">
                     <a href="/Tests" class="nav-link">Test Cases</a>
                 </li>
                 <li class="nav-item d-none d-sm-inline-block">
@@ -115,9 +118,11 @@
             <!-- Main Sidebar Container -->
             <aside class="main-sidebar sidebar-dark-primary elevation-4">
                 <!-- Brand Logo -->
-                <span class="brand-link">
-                    <span class="brand-text font-weight-light">OAuth 2.0 Sites</span>
+                 <span class="brand-link">
+                    @* <span class="brand-text font-weight-light"><img src="/img/logosm.png" /> OAuch</span> *@
+                    <img src="/img/logosm.png" />
                 </span>
+                
 
                 <!-- Sidebar -->
                 <div class="sidebar">
@@ -149,7 +154,7 @@
                                 <li class="nav-item">
                                     <a href="@Url.Action("Export", "Dashboard", new { id = menuInfo.ActiveSite.SiteId })" class="nav-link@(GetActiveClass(menuInfo.ActiveSite, PageType.Export))">
                                         <i class="nav-icon fas fa-file-export"></i>
-                                        <p>Export data</p>
+                                        <p>Export site data</p>
                                     </a>
                                 </li>
                             }
@@ -182,7 +187,13 @@
                             <li class="nav-item">
                                 <a href="@Url.Action("Import", "Dashboard")" class="nav-link@(GetActiveClass(null, PageType.Import))">
                                     <i class="nav-icon fas fa-file-import"></i>
-                                    <p>Import data</p>
+                                    <p>Import site data</p>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="@Url.Action("ExportAll", "Dashboard")" class="nav-link@(GetActiveClass(null, PageType.ExportAll))">
+                                    <i class="nav-icon fas fa-file-export"></i>
+                                    <p>Export all data</p>
                                 </a>
                             </li>
                             @if (menuInfo?.Sites?.Count > 0) {

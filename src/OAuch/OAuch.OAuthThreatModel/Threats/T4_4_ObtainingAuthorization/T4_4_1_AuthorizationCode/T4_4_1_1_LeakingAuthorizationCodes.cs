@@ -1,14 +1,8 @@
 ﻿using OAuch.OAuthThreatModel.Attackers;
 using OAuch.OAuthThreatModel.Consequences;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace OAuch.OAuthThreatModel.Threats.ObtainingAuthorization.AuthorizationCode {
-    public class T4_4_1_1_LeakingAuthorizationCodes : Threat
-    {
+    public class T4_4_1_1_LeakingAuthorizationCodes : Threat {
         public override string Description => "Eavesdropping or Leaking Authorization \"codes\"";
 
         public override string Id => "6819_4_4_1_1";
@@ -27,5 +21,6 @@ namespace OAuch.OAuthThreatModel.Threats.ObtainingAuthorization.AuthorizationCod
             "The client server may reload the target page of the redirect URI in order to automatically clean up the browser cache."
             ];
         public override AttackerType[] Attackers => [AttackerTypes.SystemsAttacker, AttackerTypes.WebAttacker];
+        public override InvolvedParty[] Parties => [InvolvedParty.UserAgent, InvolvedParty.AuthorizationEndpoint, InvolvedParty.TokenEndpoint];
     }
 }

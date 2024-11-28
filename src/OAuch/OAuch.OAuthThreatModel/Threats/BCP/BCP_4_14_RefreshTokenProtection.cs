@@ -1,10 +1,5 @@
 ﻿using OAuch.OAuthThreatModel.Attackers;
 using OAuch.OAuthThreatModel.Consequences;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace OAuch.OAuthThreatModel.Threats.BCP {
     public class BCP_4_14_RefreshTokenProtection : Threat {
@@ -23,5 +18,6 @@ namespace OAuch.OAuthThreatModel.Threats.BCP {
             "Refresh tokens SHOULD expire if the client has been inactive for some time"
             ];
         public override AttackerType[] Attackers => [AttackerTypes.WebAttacker, AttackerTypes.SystemsAttacker, AttackerTypes.NetworkAttacker];
+        public override InvolvedParty[] Parties => [InvolvedParty.TokenEndpoint];
     }
 }

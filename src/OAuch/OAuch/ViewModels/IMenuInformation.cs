@@ -1,8 +1,6 @@
 ﻿using OAuch.Database.Entities;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace OAuch.ViewModels {
     public interface IMenuInformation {
@@ -20,6 +18,7 @@ namespace OAuch.ViewModels {
         AddSite = 0b100,
         Import = 0b101,
         Export = 0b110,
+        ExportAll = 0b111,
         Other = 0b1000000000000000000000000000000
     }
 }

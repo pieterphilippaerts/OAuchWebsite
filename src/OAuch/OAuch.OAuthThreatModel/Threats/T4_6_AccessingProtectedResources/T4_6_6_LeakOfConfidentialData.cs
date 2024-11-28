@@ -1,10 +1,5 @@
 ﻿using OAuch.OAuthThreatModel.Attackers;
 using OAuch.OAuthThreatModel.Consequences;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace OAuch.OAuthThreatModel.Threats.AccessingProtectedResources {
     public class T4_6_6_LeakOfConfidentialData : Threat {
@@ -21,5 +16,6 @@ namespace OAuch.OAuthThreatModel.Threats.AccessingProtectedResources {
             "Reducing scope and expiry time for access tokens can be used to reduce the damage in case of leaks"
             ];
         public override AttackerType[] Attackers => [AttackerTypes.SystemsAttacker];
+        public override InvolvedParty[] Parties => [InvolvedParty.ResourceServer];
     }
 }

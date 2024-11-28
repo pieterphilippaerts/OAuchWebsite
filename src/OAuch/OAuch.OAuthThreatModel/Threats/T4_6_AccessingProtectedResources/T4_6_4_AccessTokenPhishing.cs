@@ -1,10 +1,5 @@
 ﻿using OAuch.OAuthThreatModel.Attackers;
 using OAuch.OAuthThreatModel.Consequences;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace OAuch.OAuthThreatModel.Threats.AccessingProtectedResources {
     public class T4_6_4_AccessTokenPhishing : Threat {
@@ -23,5 +18,6 @@ namespace OAuch.OAuthThreatModel.Threats.AccessingProtectedResources {
             "Restrict the token scope and/or limit the token to a certain resource server"
             ];
         public override AttackerType[] Attackers => [AttackerTypes.WebAttacker];
+        public override InvolvedParty[] Parties => [InvolvedParty.ResourceServer];
     }
 }

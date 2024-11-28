@@ -1,20 +1,16 @@
-﻿using System;
+﻿using OAuch.Protocols.Tls;
+using OAuch.Shared;
+using OAuch.Shared.Logging;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
 using System.Net;
 using System.Net.Security;
-using System.Net.Sockets;
 using System.Reflection;
 using System.Security.Authentication;
 using System.Security.Cryptography.X509Certificates;
-using System.Text;
 using System.Threading.Tasks;
-using OAuch.Protocols.Tls;
-using OAuch.Shared;
-using OAuch.Shared.Interfaces;
-using OAuch.Shared.Logging;
 
 namespace OAuch.Protocols.Http {
     public class HttpHelper {
@@ -49,13 +45,6 @@ namespace OAuch.Protocols.Http {
                 Request = req
             };
             var cookieContainer = new CookieContainer();
-            RemoteCertificateValidationCallback certificateCallback = (sender, cert, chain, errors) => {
-                mule.IsHttpsUsed = true;
-                mule.ServerCertificate = new CertificateReport(cert, errors == SslPolicyErrors.None);
-                if (req.ServerCertificateValidationCallback != null)
-                    return req.ServerCertificateValidationCallback(sender, cert, chain, errors);
-                return true;
-            };
 
             Logger.Log(req);
             // HttpWebRequest.AllowAutoRedirect has a bug where it doesn't set cookies that are returned in a redirect request. So we'll have to implement this manually
@@ -66,7 +55,7 @@ namespace OAuch.Protocols.Http {
             string url = req.Url;
             byte[] contents = req.Content;
             while (tries > 0) {
-                request = await CreateRequest(url, method, cookieContainer, req.ClientCertificates, req.Headers, contents, certificateCallback);
+                request = await CreateRequest(url, method, cookieContainer, req.ClientCertificates, req.Headers, contents, CertificateCallback);
                 response = await ReadResponse(request, mule);
                 if (!response.StatusCode.IsRedirect())
                     break;
@@ -85,7 +74,7 @@ namespace OAuch.Protocols.Http {
                                 for (int ci = 1; ci < components.Length; ci++) {
                                     var comp = components[ci].Trim();
                                     if (comp.StartsWith("Domain=", StringComparison.OrdinalIgnoreCase)) {
-                                        cookie.Domain = comp.Substring(7);
+                                        cookie.Domain = comp[7..];
                                     }
                                     // There's a bug in CookieContainer if you set the path of a cookie, so just send the cookies to anywhere
                                     //else  if (comp.StartsWith("Path=", StringComparison.OrdinalIgnoreCase)) {
@@ -103,7 +92,7 @@ namespace OAuch.Protocols.Http {
                             }
                         }
                     }
-                            
+
                     //try {
                     //    cookieContainer.SetCookies(request.RequestUri, response.Headers.Get(i));
                     //} catch (Exception e) {
@@ -120,7 +109,7 @@ namespace OAuch.Protocols.Http {
                             case HttpStatusCode.Found:
                             case HttpStatusCode.SeeOther:
                                 method = HttpMethods.Get;
-                                contents = new byte[0];
+                                contents = [];
                                 break;
                             case HttpStatusCode.TemporaryRedirect:
                             case HttpStatusCode.PermanentRedirect:
@@ -139,6 +128,14 @@ namespace OAuch.Protocols.Http {
             RegisterSecurityReport(response);
             return response;
 
+            bool CertificateCallback(object sender, X509Certificate? cert, X509Chain? chain, SslPolicyErrors errors) {
+                mule.IsHttpsUsed = true;
+                mule.ServerCertificate = cert != null ? new CertificateReport(cert, errors == SslPolicyErrors.None) : null;
+                if (req.ServerCertificateValidationCallback != null)
+                    return req.ServerCertificateValidationCallback(sender, cert, chain, errors);
+                return true;
+            }
+
             string? GetLocation(HttpResponse response, string originalRequest) {
                 var header = response.Headers.Get("Location");
                 if (header == null)
@@ -149,10 +146,11 @@ namespace OAuch.Protocols.Http {
                     return newUri.ToString();
                 return null;
             }
-            async Task<HttpWebRequest> CreateRequest(string url, HttpMethods method, CookieContainer cookies ,X509CertificateCollection certificates, Dictionary<HttpRequestHeaders, string> headers, byte[] content, RemoteCertificateValidationCallback certificateValidation) {
-                var request = WebRequest.Create(url) as HttpWebRequest;
-                if (request == null)
+            async Task<HttpWebRequest> CreateRequest(string url, HttpMethods method, CookieContainer cookies, X509CertificateCollection certificates, Dictionary<HttpRequestHeaders, string> headers, byte[] content, RemoteCertificateValidationCallback certificateValidation) {
+#pragma warning disable SYSLIB0014 // Type or member is obsolete
+                if (WebRequest.Create(url) is not HttpWebRequest request)
                     throw new NotSupportedException("The specified protocol is not supported; only HTTP(S) is supported.");
+#pragma warning restore SYSLIB0014 // Type or member is obsolete
                 request.Method = method.Name;
                 request.CookieContainer = cookies;
                 request.ServerCertificateValidationCallback = certificateValidation;
@@ -164,25 +162,23 @@ namespace OAuch.Protocols.Http {
                 }
                 if (method == HttpMethods.Post && content.Length > 0) {
                     var requestStream = await request.GetRequestStreamAsync();
-                    await requestStream.WriteAsync(content, 0, content.Length);
+                    await requestStream.WriteAsync(content);
                 }
                 return request;
             }
 
         }
-        private async Task<HttpResponse> ReadResponse(WebRequest request, ParameterMule mule) {
+        private static async Task<HttpResponse> ReadResponse(WebRequest request, ParameterMule mule) {
             try {
-                using (var response = await request.GetResponseAsync()) {
-                    return await ReadResponse(response as HttpWebResponse, mule);
-                }
+                using var response = await request.GetResponseAsync();
+                return await ReadResponse(response as HttpWebResponse, mule);
             } catch (WebException we) {
-                var er = we.Response as HttpWebResponse;
-                if (er == null)
+                if (we.Response is not HttpWebResponse er)
                     throw;
                 return await ReadResponse(er, mule);
             }
         }
-        private async Task<HttpResponse> ReadResponse(HttpWebResponse? response, ParameterMule mule) {
+        private static async Task<HttpResponse> ReadResponse(HttpWebResponse? response, ParameterMule mule) {
             if (response == null)
                 throw new NotSupportedException("The specified protocol is not supported.");
             var responseStream = response.GetResponseStream();
@@ -195,7 +191,7 @@ namespace OAuch.Protocols.Http {
             mule.Cached = IsCached(response.Headers);
             return new HttpResponse(mule.Request, response.StatusCode, response.Headers, ms.ToArray(), mule);
 
-            SslProtocols? GetTlsVersion(Stream s) {
+            static SslProtocols? GetTlsVersion(Stream s) {
                 try {
                     var bindingFlags = BindingFlags.Instance | BindingFlags.NonPublic;
                     var streamType = s.GetType();
@@ -216,12 +212,12 @@ namespace OAuch.Protocols.Http {
                     return null;
                 }
             }
-            CacheSettings IsCached(WebHeaderCollection headers ) {
-                var cache = CacheSettings.None;
-                if (headers.HasCacheControlNoStore()) cache = cache | CacheSettings.CacheControlNoStore;
-                if (headers.HasPragmaNoCache()) cache = cache | CacheSettings.PragmaNoCache;
-                return cache;
-            }
+        }
+        public static CacheSettings IsCached(WebHeaderCollection headers) {
+            var cache = CacheSettings.None;
+            if (headers.HasCacheControlNoStore()) cache |= CacheSettings.CacheControlNoStore;
+            if (headers.HasPragmaNoCache()) cache |= CacheSettings.PragmaNoCache;
+            return cache;
         }
 
         /// <summary>
@@ -263,10 +259,8 @@ namespace OAuch.Protocols.Http {
         public async Task<SecurityReport> GetSecurityReport(string url) {
             var securityReports = State.Get<Dictionary<string, SecurityReport>>(StateKeys.SecurityReports);
 
-            var baseUrl = GetBaseUrl(url);
-            if (baseUrl == null) 
-                throw new ArgumentException("Could not parse url for security report: " + url);
-            
+            var baseUrl = GetBaseUrl(url) ?? throw new ArgumentException("Could not parse url for security report: " + url);
+
             // if we already have a report, use that one
             if (securityReports.TryGetValue(baseUrl, out var storedReport)) {
                 return storedReport;
@@ -312,15 +306,15 @@ namespace OAuch.Protocols.Http {
         //private static StateKey<Dictionary<string, ResponseSecurityReport>> _securityReportsKey = new StateKey<Dictionary<string, ResponseSecurityReport>>();
         //private static StateKey<Dictionary<string, string>> _securityReportUrlsKey = new StateKey<Dictionary<string, string>>();
 
-        public async Task<IEnumerable<SslProtocols>> TryDowngradeConnection(string url) {
+        public static async Task<IEnumerable<SslProtocols>> TryDowngradeConnection(string url) {
             // do not cache the result, because it is only used in one test
-            if (!Uri.TryCreate(url, UriKind.Absolute ,out var uri))
-                return Enumerable.Empty<SslProtocols>();
+            if (!Uri.TryCreate(url, UriKind.Absolute, out var uri))
+                return [];
 
             var sniffer = new TlsSniffer();
-            var options = new SniffOptions() { 
+            var options = new SniffOptions() {
                 SniffProtocols = true,
-                Protocols = new SslProtocols[] { SslProtocols.Ssl3, SslProtocols.Tls, SslProtocols.Tls11 }
+                Protocols = [SslProtocols.Ssl3, SslProtocols.Tls, SslProtocols.Tls11]
             };
             var result = await sniffer.Sniff(uri, options);
             return result.AcceptedProtocols;
@@ -328,17 +322,17 @@ namespace OAuch.Protocols.Http {
 
         public async Task<IEnumerable<SslProtocols>> TryModernConnection(string url) {
             if (!Uri.TryCreate(url, UriKind.Absolute, out var uri))
-                return Enumerable.Empty<SslProtocols>();
-            string host = $"{ uri.Host }:{ uri.Port }";
+                return [];
+            string host = $"{uri.Host}:{uri.Port}";
 
-            var modernReports = State.Get<Dictionary<string, IEnumerable<SslProtocols>>>(StateKeys.ModernConnectionResults);            
-            if (modernReports.TryGetValue(host, out var ret))                
+            var modernReports = State.Get<Dictionary<string, IEnumerable<SslProtocols>>>(StateKeys.ModernConnectionResults);
+            if (modernReports.TryGetValue(host, out var ret))
                 return ret;
 
             var sniffer = new TlsSniffer();
             var options = new SniffOptions() {
                 SniffProtocols = true,
-                Protocols = new SslProtocols[] { SslProtocols.Tls12, SslProtocols.Tls13 }
+                Protocols = [SslProtocols.Tls12, SslProtocols.Tls13]
             };
             var result = await sniffer.Sniff(uri, options);
             modernReports[host] = result.AcceptedProtocols;

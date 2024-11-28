@@ -2,15 +2,12 @@
 using AngleSharp.Html.Parser;
 using OAuch.Compliance.Tests.Features;
 using OAuch.Protocols.Http;
-using OAuch.Protocols.OAuth2;
 using OAuch.Protocols.OAuth2.BuildingBlocks;
 using OAuch.Shared;
 using OAuch.Shared.Enumerations;
 using OAuch.Shared.Interfaces;
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace OAuch.Compliance.Tests.AuthEndpoint {
@@ -65,6 +62,11 @@ namespace OAuch.Compliance.Tests.AuthEndpoint {
             var htmlContents = response.ToString(true);
             var context = BrowsingContext.New(Configuration.Default);
             var parser = context.GetService<IHtmlParser>();
+            if (parser == null) {
+                LogInfo("Could not load HTML parser.");
+                Result.Outcome = TestOutcomes.Failed;
+                return;
+            }
             var document = parser.ParseDocument(htmlContents);
             var metaTags = document.QuerySelectorAll("meta");
             foreach (var metaTag in metaTags) {

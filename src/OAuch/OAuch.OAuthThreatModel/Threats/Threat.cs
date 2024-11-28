@@ -1,11 +1,4 @@
 ﻿using OAuch.OAuthThreatModel.Attackers;
-using OAuch.OAuthThreatModel.Consequences;
-using OAuch.OAuthThreatModel.Enrichers;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace OAuch.OAuthThreatModel.Threats {
     public abstract class Threat : ModelElement {
@@ -27,12 +20,13 @@ namespace OAuch.OAuthThreatModel.Threats {
 
         public static List<Threat> All {
             get {
-                if (_allThreats == null) {
-                    _allThreats = FindElements<Threat>();
-                }
+                _allThreats ??= FindElements<Threat>();
                 return _allThreats;
             }
         }
         private static List<Threat>? _allThreats;
+
+        public virtual StrideThreatCategories[] StrideCategories { get; }
+        public abstract InvolvedParty[] Parties { get; }
     }
 }

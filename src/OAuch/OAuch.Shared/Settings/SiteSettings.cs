@@ -5,8 +5,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Cryptography.X509Certificates;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace OAuch.Shared.Settings {
     /// <summary>
@@ -18,13 +16,13 @@ namespace OAuch.Shared.Settings {
         public string? ClientSecret { get; set; }
         public string? Scope { get; set; }
     }
-    public record GrantOverride { 
-        public string? FlowType { get; set; }
+    public record GrantOverride {
+        public required string FlowType { get; set; }
         public ClientSettings? OverrideSettings { get; set; }
     }
     public record SiteSettings {
         public SiteSettings() {
-            this.SelectedStandards = new List<string>();
+            this.SelectedStandards = [];
             this.DefaultClient = new ClientSettings();
             this.AlternativeClient = new ClientSettings();
         }
@@ -59,14 +57,14 @@ namespace OAuch.Shared.Settings {
             }
             return defs;
 
-            string? Fix(string? def, string? ovr) {
+            static string? Fix(string? def, string? ovr) {
                 if (string.IsNullOrWhiteSpace(ovr))
                     return def;
                 return ovr;
             }
         }
 
-        public List<GrantOverride> Overrides { get; set; }
+        public List<GrantOverride>? Overrides { get; set; }
 
         public string? Username { get; set; }
         public string? Password { get; set; }
@@ -106,9 +104,7 @@ namespace OAuch.Shared.Settings {
                         if (_certificates == null)
                             this.CertificateId = null; // certificate doesn't exist anymore (deleted?)
                     }
-                    if (_certificates == null) {
-                        _certificates = new X509CertificateCollection();
-                    }
+                    _certificates ??= [];
                 }
                 return _certificates;
             }

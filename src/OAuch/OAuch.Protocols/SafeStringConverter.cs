@@ -1,7 +1,6 @@
 ﻿using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
-using System.Text;
 
 namespace OAuch.Protocols {
     public class SafeStringConverter : JsonConverter {
@@ -18,8 +17,7 @@ namespace OAuch.Protocols {
                 var l = new List<string>();
                 reader.Read();
                 while (reader.TokenType != JsonToken.EndArray) {
-                    var s = reader.Value as string;
-                    if (s != null)
+                    if (reader.Value is string s)
                         l.Add(s);
 
                     reader.Read();
@@ -27,8 +25,7 @@ namespace OAuch.Protocols {
                 return l;
             } else {
                 var ret = new List<string>();
-                var s = reader.Value as string;
-                if (s != null) { 
+                if (reader.Value is string s) {
                     if (SplitOnSpace) {
                         var sp = s.Split(' ');
                         foreach (var spe in sp) {
@@ -43,7 +40,7 @@ namespace OAuch.Protocols {
             }
         }
         public override void WriteJson(JsonWriter writer, object? value, JsonSerializer serializer) {
-            
+
         }
     }
 }

@@ -2,8 +2,6 @@
 using OAuch.Database.Entities;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace OAuch.ViewModels {
     public class ResultsViewModel : IMenuInformation {
@@ -13,8 +11,8 @@ namespace OAuch.ViewModels {
         public Guid SiteId { get; set; }
         public PageType PageType { get; set; }
         public DateTime StartedAt { get; set; }
-        public ComplianceResult Result { get; set; }
-        public IEnumerable<HistoryEntry> History { get; set; }
+        public required ComplianceResult Result { get; set; }
+        public required IEnumerable<HistoryEntry> History { get; set; }
     }
     public class HistoryEntry {
         public Guid HistoryId { get; set; }

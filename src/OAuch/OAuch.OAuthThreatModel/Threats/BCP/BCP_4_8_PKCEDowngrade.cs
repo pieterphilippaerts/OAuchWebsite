@@ -1,10 +1,5 @@
 ﻿using OAuch.OAuthThreatModel.Attackers;
 using OAuch.OAuthThreatModel.Consequences;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace OAuch.OAuthThreatModel.Threats.BCP {
     public class BCP_4_8_PKCEDowngrade : Threat {
@@ -22,5 +17,6 @@ namespace OAuch.OAuthThreatModel.Threats.BCP {
             "Authorization servers that mandate the use of PKCE in general or for particular clients implicitly implement this security measure"
             ];
         public override AttackerType[] Attackers => [AttackerTypes.WebAttacker];
+        public override InvolvedParty[] Parties => [InvolvedParty.TokenEndpoint];
     }
 }

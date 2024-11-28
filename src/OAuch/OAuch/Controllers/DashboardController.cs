@@ -1,45 +1,52 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.AspNetCore.SignalR;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
-using Microsoft.EntityFrameworkCore.Migrations;
 using Newtonsoft.Json;
 using OAuch.Compliance;
 using OAuch.Compliance.Results;
 using OAuch.Compliance.Tests;
-using OAuch.Compliance.Tests.Features;
-using OAuch.Compliance.Tests.Shared;
 using OAuch.Database;
 using OAuch.Database.Entities;
 using OAuch.Helpers;
 using OAuch.Hubs;
-using OAuch.OAuthThreatModel;
 using OAuch.OAuthThreatModel.Attackers;
 using OAuch.OAuthThreatModel.Flows;
 using OAuch.Protocols.OAuth2;
 using OAuch.Shared;
 using OAuch.Shared.Enumerations;
-using OAuch.Shared.Logging;
 using OAuch.Shared.Settings;
 using OAuch.TestRuns;
 using OAuch.ViewModels;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
-using System.Net.Http.Headers;
-using System.Net.WebSockets;
-using System.Security.Claims;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace OAuch.Controllers {
     [Authorize]
-    public class DashboardController : BaseController {
+    public partial class DashboardController : BaseController {
+
+        private static readonly Dictionary<string, (string Title, IEnumerable<OAuthDocument> Documents)> _initialDocuments = new() {
+            //{ "OAUTH21", ("OAuth 2.1 (default)", [ComplianceDatabase.Documents[""]]) },
+            { "OAUTH20BCP", ("OAuth 2.0 (with Best Practices)", [ComplianceDatabase.Documents["RFC6749"], ComplianceDatabase.Documents["RFC6750"], ComplianceDatabase.Documents["RFC6819"], ComplianceDatabase.Documents["SecBCP"], ComplianceDatabase.Documents["RFC7636"]]) },
+            { "OAUTH20", ("OAuth 2.0 (original standard, outdated)", [ComplianceDatabase.Documents["RFC6749"], ComplianceDatabase.Documents["RFC6750"], ComplianceDatabase.Documents["RFC6819"]]) },
+            { "OIDC", ("OpenID Connect + OAuth 2.0", [ComplianceDatabase.Documents["OIDC"], ComplianceDatabase.Documents["RFC6749"], ComplianceDatabase.Documents["RFC6750"], ComplianceDatabase.Documents["RFC6819"]]) },
+            { "FAPIBASE", ("Financial-grade API 1.0 (base profile)", [ComplianceDatabase.Documents["FAPI1Base"], ComplianceDatabase.Documents["OIDC"], ComplianceDatabase.Documents["RFC6749"], ComplianceDatabase.Documents["RFC6750"], ComplianceDatabase.Documents["RFC6819"]]) },
+            { "FAPIADV", ("Financial-grade API 1.0 (advanced profile)", [ComplianceDatabase.Documents["FAPI1Adv"], ComplianceDatabase.Documents["FAPI1Base"], ComplianceDatabase.Documents["OIDC"], ComplianceDatabase.Documents["RFC6749"], ComplianceDatabase.Documents["RFC6750"], ComplianceDatabase.Documents["RFC6819"]]) },
+            { "ALL",  ("All available tests", ComplianceDatabase.AllDocuments) },
+        };
+        private const string _defaultInitialDocuments = "OAUTH20BCP";
+
         public DashboardController(OAuchDbContext db, IHubContext<TestRunHub> hubContext) {
             this.HubContext = hubContext;
             this.Database = db;
@@ -90,16 +97,16 @@ namespace OAuch.Controllers {
                 OpenIdIssuer = "https://demo.duendesoftware.com",
                 PKCEDefault = PKCESupportTypes.Hash,
                 ResponseMode = ResponseModes.Default,
-                Overrides = new List<GrantOverride> {
+                Overrides = [
                     new GrantOverride {
                         FlowType = OAuthHelper.CLIENT_CREDENTIALS_FLOW_TYPE,
                         OverrideSettings = new ClientSettings {
                             Scope = "api"
                         }
                     }
-                },
-                SelectedStandards = ComplianceDatabase.AllDocuments.Where(d => d.DocumentCategory != DocumentCategories.Other).Select(d => d.Id).ToList(),
-                ExcludedFlows = new List<string> {
+                ],
+                SelectedStandards = ComplianceDatabase.AllDocuments.Select(d => d.Id).ToList(), //.Where(d => d.DocumentCategory != DocumentCategories.Other)
+                ExcludedFlows = [
                     OAuthHelper.TOKEN_FLOW_TYPE,
                     OAuthHelper.IDTOKEN_TOKEN_FLOW_TYPE,
                     OAuthHelper.IDTOKEN_FLOW_TYPE,
@@ -108,18 +115,18 @@ namespace OAuch.Controllers {
                     OAuthHelper.CODE_TOKEN_FLOW_TYPE,
                     OAuthHelper.DEVICE_FLOW_TYPE,
                     OAuthHelper.PASSWORD_FLOW_TYPE
-                }
+                ]
             };
 
             var site = new Site {
-                SiteId = Guid.NewGuid(),                 
+                SiteId = Guid.NewGuid(),
                 Name = "Demo Site",
                 OwnerId = this.OAuchInternalId!.Value,
                 CurrentConfigurationJson = OAuchJsonConvert.Serialize(settings, Formatting.Indented),
                 LatestResultId = null
             };
             Database.Sites.Add(site);
-            Database.SaveChanges();        
+            Database.SaveChanges();
             return RedirectToAction("Index", "Dashboard");
         }
 
@@ -131,14 +138,33 @@ namespace OAuch.Controllers {
         [HttpPost]
         public IActionResult Import(IFormFile file) {
             if (file != null && file.Length > 0) {
-                byte[] blob;
-                using (var s = file.OpenReadStream()) {
-                    blob = s.ReadFully();
+                byte[]? blob = null;
+                if (file.FileName.EndsWith(".zip", StringComparison.OrdinalIgnoreCase)) {
+                    using (var s = file.OpenReadStream()) {
+                        using (var zip = new ZipArchive(s, ZipArchiveMode.Read)) {
+                            var entry = zip.Entries.FirstOrDefault();
+                            if (entry != null) {
+                                using (var stream = entry.Open()) {
+                                    blob = stream.ReadFully();
+                                }
+                            }
+                        }
+                    }
+                } else {
+                    using (var s = file.OpenReadStream()) {
+                        blob = s.ReadFully();
+                    }
                 }
-                var json = Encoding.UTF8.GetString(blob);
-                var o = OAuchJsonConvert.Deserialize<SiteData[]>(json);
+
+                SiteData[]? o = null;
+                if (blob != null) {
+                    var json = Encoding.UTF8.GetString(blob);
+                    o = OAuchJsonConvert.Deserialize<SiteData[]>(json);
+                }
                 if (o != null) {
                     foreach (var s in o) {
+                        if (s.Name == null || s.CurrentConfiguration == null) // invalid data
+                            continue;
                         // add the certificate
                         if (s.Certificate != null) {
                             var cer = new SavedCertificate() {
@@ -162,21 +188,23 @@ namespace OAuch.Controllers {
                         Database.SaveChanges(); // save to get a SiteId
                         // add the serialized tests
                         SerializedTestRun? mostRecent = null;
-                        foreach (var tr in s.TestRuns) {
-                            var str = new SerializedTestRun {
-                                SiteId = site.SiteId,
-                                StartedAt = tr.StartedAt,
-                                ConfigurationJson = OAuchJsonConvert.Serialize(tr.Configuration),
-                                SelectedDocumentIdsJson = OAuchJsonConvert.Serialize(tr.SelectedDocumentIds),
-                                TestResultsJson = OAuchJsonConvert.Serialize(tr.TestResults),
-                                StateCollectionJson = OAuchJsonConvert.Serialize(tr.StateCollection)
-                            };
-                            if (mostRecent == null || mostRecent.StartedAt < str.StartedAt)
-                                mostRecent = str;
-                            Database.SerializedTestRuns.Add(str);
+                        if (s.TestRuns != null) {
+                            foreach (var tr in s.TestRuns) {
+                                var str = new SerializedTestRun {
+                                    SiteId = site.SiteId,
+                                    StartedAt = tr.StartedAt,
+                                    ConfigurationJson = OAuchJsonConvert.Serialize(tr.Configuration),
+                                    SelectedDocumentIdsJson = OAuchJsonConvert.Serialize(tr.SelectedDocumentIds),
+                                    TestResultsJson = OAuchJsonConvert.Serialize(tr.TestResults),
+                                    StateCollectionJson = OAuchJsonConvert.Serialize(tr.StateCollection)
+                                };
+                                if (mostRecent == null || mostRecent.StartedAt < str.StartedAt)
+                                    mostRecent = str;
+                                Database.SerializedTestRuns.Add(str);
+                            }
                         }
                         Database.SaveChanges(); // get the Id of the most recent test run
-                        if (mostRecent != null ) {
+                        if (mostRecent != null) {
                             site.LatestResultId = mostRecent.TestResultId;
                             Database.SaveChanges();
                         }
@@ -184,7 +212,7 @@ namespace OAuch.Controllers {
                     return RedirectToAction("Index");
                 } else {
                     ModelState.AddModelError("DeserializeError", "Could not deserialize the input file.");
-                }                
+                }
             }
             var model = new EmptyViewModel();
             FillMenu(model, pageType: PageType.Import);
@@ -203,11 +231,40 @@ namespace OAuch.Controllers {
             if (site == null)
                 return NotFound();
             var data = GetSiteData(site);
-            var jsonData = Encoding.UTF8.GetBytes(OAuchJsonConvert.Serialize(data, Formatting.Indented));
+            var jsonData = Encoding.UTF8.GetBytes(OAuchJsonConvert.Serialize(new SiteData[] { data }, Formatting.Indented));
             return File(jsonData, "application/json", "export.json");
         }
+        public IActionResult ExportAll() {
+            var model = new EmptyViewModel();
+            FillMenu(model, null, PageType.ExportAll);
+            return View(model);
+        }
+        [HttpPost]
+        public IActionResult ExportAllData(Guid[]? SelectedSites) {
+            if (SelectedSites == null || SelectedSites.Length == 0)
+                return new EmptyResult();
+
+            var sites = new List<SiteData>();
+            foreach(var guid in SelectedSites) {
+                var site = GetSite(guid);
+                if (site == null)
+                    return NotFound(); // if one of the GUID's is invalid, cancel the entire operation (hack in progress?)
+                sites.Add(GetSiteData(site));
+            }
+            var jsonData = Encoding.UTF8.GetBytes(OAuchJsonConvert.Serialize(sites, Formatting.Indented));
+            var zippedData = new MemoryStream();
+            using (var archive = new ZipArchive(zippedData, ZipArchiveMode.Create, true)) {
+                var exportEntry = archive.CreateEntry("export.json");
+                using (var exportStream = exportEntry.Open()) {
+                    exportStream.Write(jsonData);
+                }
+            }
+            zippedData.Position = 0;
+
+            return File(zippedData, "application/json", "export.zip");
+        }
         [NonAction]
-        private SiteData[] GetSiteData(Site site) {
+        private SiteData GetSiteData(Site site) {
             var currentConfig = JsonConvert.DeserializeObject<SiteSettings>(site.CurrentConfigurationJson);
             CertificateInfo? certificate = null;
             if (currentConfig?.CertificateId != null) {
@@ -228,50 +285,52 @@ namespace OAuch.Controllers {
                 StateCollection = OAuchJsonConvert.Deserialize<StateCollection>(c.StateCollectionJson)!
             }).ToList();
 
-            return [
-                new SiteData {
-                    Name = site.Name,
-                    CurrentConfiguration = currentConfig!,
-                    Certificate = certificate,
-                    TestRuns = runs
-                }
-                ];
+            return new SiteData {
+                Name = site.Name,
+                CurrentConfiguration = currentConfig!,
+                Certificate = certificate,
+                TestRuns = runs
+            };
         }
 
         private class SiteData {
-            public string Name { get; set; }
-            public SiteSettings CurrentConfiguration { get; set; }
-            public CertificateInfo? Certificate {get;set;}
-            public List<TestRunData> TestRuns { get; set; }
+            public string? Name { get; set; }
+            public SiteSettings? CurrentConfiguration { get; set; }
+            public CertificateInfo? Certificate { get; set; }
+            public List<TestRunData>? TestRuns { get; set; }
         }
         private class TestRunData {
-            public DateTime StartedAt { get; set; }
-            public List<string> SelectedDocumentIds { get; set; }
-            public SiteSettings Configuration { get; set; }
-            public List<TestResult> TestResults { get; set; }
-            public StateCollection StateCollection { get; set; }
+            public required DateTime StartedAt { get; set; }
+            public required List<string> SelectedDocumentIds { get; set; }
+            public required SiteSettings Configuration { get; set; }
+            public required List<TestResult> TestResults { get; set; }
+            public required StateCollection StateCollection { get; set; }
         }
-        private class CertificateInfo { 
-            public string Name { get; set; }
+        private class CertificateInfo {
+            public required string Name { get; set; }
             public string? Password { get; set; }
-            public byte[] Blob { get; set; }
+            public required byte[] Blob { get; set; }
         }
 
         public IActionResult AddSite() {
             var model = new AddSiteViewModel();
             FillMenu(model, pageType: PageType.AddSite);
+            model.InitialDocuments = _initialDocuments;
+            model.SelectedInitialDocuments = _defaultInitialDocuments;
             return View(model);
         }
-
-        private bool IsSiteNameOk(string? name) {
+        private static bool IsSiteNameOk([NotNullWhen(true)] string? name) {
             if (name == null || name.Length == 0 || name.Length > 20)
                 return false;
-            var r = new Regex(@"^[a-zA-Z0-9._\p{Pd} ]+$");
+            var r = IsSiteNameOkRegEx();
             return r.IsMatch(name);
         }
         [HttpPost]
         public IActionResult AddSite(AddSiteViewModel model) {
             if (ModelState.IsValid) {
+                if (!_initialDocuments.Keys.Any(c => c == model.SelectedInitialDocuments)) 
+                    model.SelectedInitialDocuments = _defaultInitialDocuments;               
+
                 if (IsSiteNameOk(model.Name)) {
                     OAuthMetaData? metadata = null;
                     if (!string.IsNullOrWhiteSpace(model.MetadataUrl) && Uri.TryCreate(model.MetadataUrl, UriKind.Absolute, out var metadataUri)) {
@@ -280,9 +339,10 @@ namespace OAuch.Controllers {
                             ModelState.AddModelError("NoMetadata", "No OAuth metadata could be found on the given URL. If you do not know the correct metadata URL, you can leave this parameter empty and fill in all the OAuth parameters manually.");
                     }
                     if (ModelState.ErrorCount == 0) {
-                        var settings = new SiteSettings();
-                        settings.CallbackUri = OAuchHelper.CallbackUri;
-                        settings.SelectedStandards = ComplianceDatabase.AllDocuments.Where(d => d.DocumentCategory != DocumentCategories.Other).Select(d => d.Id).ToList();
+                        var settings = new SiteSettings {
+                            CallbackUri = OAuchHelper.CallbackUri,
+                            SelectedStandards = _initialDocuments[model.SelectedInitialDocuments].Documents.Select(c => c.Id).ToList() //ComplianceDatabase.AllDocuments.Select(d => d.Id).ToList() //.Where(d => d.DocumentCategory != DocumentCategories.Other)
+                        };
                         if (metadata != null) { // != null implies that it's valid
                             string? scope = null;
                             if (metadata.ScopesSupported != null) {
@@ -344,6 +404,7 @@ namespace OAuch.Controllers {
                 }
             }
             FillMenu(model, pageType: PageType.AddSite);
+            model.InitialDocuments = _initialDocuments;
             return View(model);
         }
         public async Task<IActionResult> DeleteSite(Guid id) {
@@ -353,10 +414,10 @@ namespace OAuch.Controllers {
 
             var runningManagers = TestRunManager.Current.Where(c => c.SiteId == id).ToList();
             if (runningManagers.Count > 0) {
-                foreach(var man in runningManagers) {
-                    man.OnAbort();
+                foreach (var man in runningManagers) {
+                    await man.OnAbort();
                 }
-                for(int retry = 0; retry < 10; retry++) { // use at most 1 second
+                for (int retry = 0; retry < 10; retry++) { // use at most 1 second
                     await Task.Delay(100); // wait 100 ms
                     if (!TestRunManager.Current.Any(trm => trm.SiteId == id))
                         break; // some test runs haven't been complete yet
@@ -374,20 +435,23 @@ namespace OAuch.Controllers {
             if (site == null)
                 return NotFound();
             if (site.LatestResultId != null)
-                return RedirectToAction("Results", new { id = id });
-            var model = new OverviewViewModel();
+                return RedirectToAction("Results", new { id });
+            var model = new OverviewViewModel {
+                SiteId = site.SiteId,
+                SiteName = site.Name
+            };
             FillMenu(model, site, PageType.Overview);
-            model.SiteId = site.SiteId;
-            model.SiteName = site.Name;
-            try {
-                var settings = OAuchJsonConvert.Deserialize<SiteSettings>(site.CurrentConfigurationJson);
-                model.AuthorizationUri= string.IsNullOrWhiteSpace(settings.AuthorizationUri) ? SettingsStatus.Empty : SettingsStatus.Ok; ;
-                model.TokenUri= string.IsNullOrWhiteSpace(settings.TokenUri) ? SettingsStatus.Incomplete : SettingsStatus.Ok; ;
-                model.ClientId= string.IsNullOrWhiteSpace(settings.DefaultClient.ClientId) ? SettingsStatus.Incomplete : SettingsStatus.Ok; ;
-                model.ClientSecret = settings.IsConfidentialClient ? SettingsStatus.Ok : SettingsStatus.Empty;
-                model.TestUri = string.IsNullOrWhiteSpace(settings.TestUri) ? SettingsStatus.Incomplete : SettingsStatus.Ok;
-                model.SelectedDocuments = settings.SelectedStandards?.Count ?? 0;
-            } catch { }
+            //try {
+            var settings = OAuchJsonConvert.Deserialize<SiteSettings>(site.CurrentConfigurationJson);
+            if (settings == null)
+                return NotFound();
+            model.AuthorizationUri = string.IsNullOrWhiteSpace(settings.AuthorizationUri) ? SettingsStatus.Empty : SettingsStatus.Ok; ;
+            model.TokenUri = string.IsNullOrWhiteSpace(settings.TokenUri) ? SettingsStatus.Incomplete : SettingsStatus.Ok; ;
+            model.ClientId = string.IsNullOrWhiteSpace(settings.DefaultClient.ClientId) ? SettingsStatus.Incomplete : SettingsStatus.Ok; ;
+            model.ClientSecret = settings.IsConfidentialClient ? SettingsStatus.Ok : SettingsStatus.Empty;
+            model.TestUri = string.IsNullOrWhiteSpace(settings.TestUri) ? SettingsStatus.Incomplete : SettingsStatus.Ok;
+            model.SelectedDocuments = settings.SelectedStandards?.Count ?? 0;
+            //} catch { }
             return View(model);
         }
 
@@ -398,15 +462,17 @@ namespace OAuch.Controllers {
 
             // create the model
             var settings = OAuchJsonConvert.Deserialize<SiteSettings>(site.CurrentConfigurationJson);
-            if (settings.Overrides == null)
-                settings.Overrides = new List<GrantOverride>();
+            if (settings == null)
+                return NotFound();
+            settings.Overrides ??= [];
             foreach (var f in OAuthHelper.AllFlows) {
                 if (!settings.Overrides.Any(go => go.FlowType == f))
                     settings.Overrides.Add(new GrantOverride() { FlowType = f });
             }
-            var model = new SettingsViewModel(settings);
-            model.SiteName = site.Name;
-            model.Certificates = new SelectList(Database.Certificates.Where(c => c.OwnerId == this.OAuchInternalId!.Value).ToList(), "SavedCertificateId", "Name");
+            var model = new SettingsViewModel(settings) {
+                SiteName = site.Name,
+                Certificates = new SelectList(Database.Certificates.Where(c => c.OwnerId == this.OAuchInternalId!.Value).ToList(), "SavedCertificateId", "Name")
+            };
             FillMenu(model, site, PageType.Settings);
             return View(model);
         }
@@ -416,7 +482,7 @@ namespace OAuch.Controllers {
             if (site == null)
                 return NotFound();
 
-            if (IsSiteNameOk( model.SiteName )) {
+            if (IsSiteNameOk(model.SiteName)) {
                 site.Name = model.SiteName;
             }
             // check certificate
@@ -429,7 +495,7 @@ namespace OAuch.Controllers {
             site.CurrentConfigurationJson = OAuchJsonConvert.Serialize(model.Settings, Formatting.None);
             Database.Sites.Update(site);
             Database.SaveChanges();
-            return RedirectToAction("Overview", new { id = id });
+            return RedirectToAction("Overview", new { id });
         }
 
         public IActionResult RunTest(Guid id) {
@@ -448,9 +514,10 @@ namespace OAuch.Controllers {
                 return NotFound();
 
             var manager = TestRunManager.CreateManager(site, HubContext);
-            var model = new RunningViewModel();
-            model.SiteId = site.SiteId;
-            model.TestId = manager.ManagerId;
+            var model = new RunningViewModel {
+                SiteId = site.SiteId,
+                TestId = manager.ManagerId
+            };
             FillMenu(model, site);
             return View(model);
         }
@@ -465,7 +532,7 @@ namespace OAuch.Controllers {
 
             IEnumerable<string>? retryIds = null;
             if (retry != null) {
-                retryIds = new string[] { retry };
+                retryIds = [retry];
             }
 
             var manager = TestRunManager.CreateManager(serializedTestRun, site.OwnerId, HubContext, retryIds);
@@ -481,7 +548,7 @@ namespace OAuch.Controllers {
 
             var serializedTestRun = Database.SerializedTestRuns.FirstOrDefault(tr => tr.TestResultId == rid);
             if (serializedTestRun == null || serializedTestRun.SiteId != site.SiteId /* user tries to access a result of someone else */)
-                return RedirectToAction("Overview", new { id = id });
+                return RedirectToAction("Overview", new { id });
 
             var model = new ResultsViewModel {
                 SiteId = id,
@@ -511,7 +578,7 @@ namespace OAuch.Controllers {
             site.LatestResultId = Database.SerializedTestRuns.Where(c => c.SiteId == id && c.TestResultId != did).Select(c => c.TestResultId).FirstOrDefault();
             Database.SaveChanges();
 
-            return RedirectToAction("Results", new { id = id, rid = rid });
+            return RedirectToAction("Results", new { id, rid });
         }
 
         public IActionResult Log(Guid id /* result id */) {
@@ -523,8 +590,10 @@ namespace OAuch.Controllers {
                 return NotFound();
 
             var testResults = OAuchJsonConvert.Deserialize<List<TestResult>>(serializedTestRun.TestResultsJson);
+            if (testResults == null)
+                return NotFound();
             var formatter = new HtmlLogFormatter();
-            var model = new LogViewModel(formatter.ToHtml(id, testResults));
+            var model = new LogViewModel(HtmlLogFormatter.ToHtml(id, testResults));
             return View(model);
         }
         public IActionResult Attacks(AttacksViewModel filter) {
@@ -549,18 +618,17 @@ namespace OAuch.Controllers {
                 return null;
 
             var testResults = OAuchJsonConvert.Deserialize<List<TestResult>>(serializedTestRun.TestResultsJson);
+            if (testResults == null)
+                return null;
             var results = GetSiteResults(serializedTestRun);
             var context = new ThreatModelContext(testResults, results.ThreatReports);
-            var model = new AttacksViewModel();
-            model.Id = filter.Id;
-            model.ThreatReports = results.ThreatReports.ToDictionary(c => c.Threat.Id);
-            model.AllFlows = Flow.All.Where(c => c.IsRelevant(context)).ToList();
-            model.AttackerTypes = AttackerTypes.All;
+            var model = new AttacksViewModel {
+                Id = filter.Id,
+                ThreatReports = results.ThreatReports.ToDictionary(c => c.Threat.Id),
+                AllFlows = Flow.All.Where(c => c.IsRelevant(context)).ToList(),
+                AttackerTypes = AttackerTypes.All
+            };
             var allThreats = OAuthThreatModel.Threats.Threat.All.Where(c => c.IsRelevant(context)).DistinctBy(c => c.Id).ToList();
-            IEnumerable<string>? selectedAttackers = filter?.SelectedFilter;
-            if (selectedAttackers == null)
-                selectedAttackers = model.AttackerTypes.Select(c => c.Id);
-
             model.AllUnmitigatedThreats = allThreats.Where(c => {
                 if (!model.ThreatReports.TryGetValue(c.Id, out var tr))
                     return false;
@@ -587,7 +655,6 @@ namespace OAuch.Controllers {
 
             return model;
         }
-        private static int InternalCounter = 0;
 
         [NonAction]
         private Site? GetSite(Guid id) {
@@ -599,7 +666,7 @@ namespace OAuch.Controllers {
 
         [NonAction]
         private void FillMenu(IMenuInformation vm, Site? site = null, PageType pageType = PageType.Unknown) {
-            vm.Sites = Database.Sites.Where(s => s.OwnerId == this.OAuchInternalId).OrderBy(s => s.Name).ToList();
+            vm.Sites = [.. Database.Sites.Where(s => s.OwnerId == this.OAuchInternalId).OrderBy(s => s.Name)];
             vm.ActiveSite = site;
             vm.PageType = pageType;
         }
@@ -621,8 +688,9 @@ namespace OAuch.Controllers {
         }
 
         public IActionResult Certificates() {
-            var model = new CertificatesViewModel();
-            model.Certificates = this.Database.Certificates.Where(c => c.OwnerId == this.OAuchInternalId!.Value).ToList();
+            var model = new CertificatesViewModel {
+                Certificates = [.. this.Database.Certificates.Where(c => c.OwnerId == this.OAuchInternalId!.Value)]
+            };
             FillMenu(model, pageType: PageType.Certificates);
             return View(model);
         }
@@ -637,15 +705,16 @@ namespace OAuch.Controllers {
                 if (x509Cert == null) {
                     ModelState.AddModelError("PfxError", "Could not find a valid certificate in the uploaded file. Please make sure the file is a valid PKCS#12 file, the password is correct, and the certificate's private key is included in the file.");
                 } else {
-                    var cert = new SavedCertificate();
-                    cert.SavedCertificateId = Guid.NewGuid();
-                    cert.OwnerId = this.OAuchInternalId!.Value;
+                    var cert = new SavedCertificate {
+                        SavedCertificateId = Guid.NewGuid(),
+                        OwnerId = this.OAuchInternalId!.Value
+                    };
                     string cname = x509Cert.FriendlyName;
                     if (string.IsNullOrEmpty(cname)) {
                         cname = x509Cert.GetNameInfo(X509NameType.SimpleName, false);
                     }
                     if (!string.IsNullOrEmpty(cname)) {
-                        cert.Name = $"{ cname } ({ Path.GetFileName(file.FileName) })";
+                        cert.Name = $"{cname} ({Path.GetFileName(file.FileName)})";
                     } else {
                         cert.Name = Path.GetFileName(file.FileName);
                     }
@@ -659,7 +728,7 @@ namespace OAuch.Controllers {
                 }
             }
 
-            model.Certificates = this.Database.Certificates.Where(c => c.OwnerId == this.OAuchInternalId!.Value).ToList();
+            model.Certificates = [.. this.Database.Certificates.Where(c => c.OwnerId == this.OAuchInternalId!.Value)];
             FillMenu(model, pageType: PageType.Certificates);
             return View(model);
         }
@@ -691,12 +760,17 @@ namespace OAuch.Controllers {
             return GetSiteResults(serializedTestRun);
         }
         [NonAction]
-        private ComplianceResult GetSiteResults(SerializedTestRun serializedTestRun) {
+        private static ComplianceResult GetSiteResults(SerializedTestRun serializedTestRun) {
             var settings = OAuchJsonConvert.Deserialize<SiteSettings>(serializedTestRun.ConfigurationJson);
             var docIds = OAuchJsonConvert.Deserialize<List<string>>(serializedTestRun.SelectedDocumentIdsJson);
-            var documents = docIds.Select(did => ComplianceDatabase.AllDocuments.FirstOrDefault(d => d.Id == did)).Where(c => c != null).Select(c => c!);
             var testResults = OAuchJsonConvert.Deserialize<List<TestResult>>(serializedTestRun.TestResultsJson);
+            if (settings == null || docIds == null || testResults == null)
+                throw new InvalidDataException("Unable to deserialize site data.");
+            var documents = docIds.Select(did => ComplianceDatabase.AllDocuments.FirstOrDefault(d => d.Id == did)).Where(c => c != null).Select(c => c!);
             return new ComplianceResult(serializedTestRun.StartedAt, settings, documents, testResults);
         }
+
+        [GeneratedRegex(@"^[a-zA-Z0-9._\p{Pd} ]+$")]
+        private static partial Regex IsSiteNameOkRegEx();
     }
 }

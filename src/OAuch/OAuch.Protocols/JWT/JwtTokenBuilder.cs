@@ -1,15 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
 using OAuch.Shared;
 using OAuch.Shared.Logging;
+using System;
+using System.Text;
 
 namespace OAuch.Protocols.JWT {
     public class JwtTokenBuilder {
         public JwtTokenBuilder() {
-            this.Header = new JsonDictionary();
-            this.Claims = new JsonDictionary();
+            this.Header = [];
+            this.Claims = [];
         }
 
         public JsonDictionary Header { get; }
@@ -17,9 +16,7 @@ namespace OAuch.Protocols.JWT {
 
 
         public string Build(TokenKey key) {
-            string? algName = Header.Read<string>("alg");
-            if (algName == null)
-                throw new NotSupportedException();
+            string? algName = Header.Read<string>("alg") ?? throw new NotSupportedException();
             var alg = JwtAlgorithm.CreateFromString(algName);
             if (alg.Id < 0)
                 throw new NotSupportedException();
@@ -45,8 +42,7 @@ namespace OAuch.Protocols.JWT {
             return builder;
         }
         public static JwtTokenBuilder? CreateFromToken(string? token, LogContext? logger = null) {
-            if (logger == null)
-                logger = LogContext.NullLogger;
+            logger ??= LogContext.NullLogger;
             var t = JsonWebToken.CreateFromString(token, logger);
             if (t == null)
                 return null;

@@ -4,8 +4,6 @@ using OAuch.Shared;
 using OAuch.Shared.Settings;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace OAuch.Protocols.OAuth2.BuildingBlocks {
@@ -21,6 +19,7 @@ namespace OAuch.Protocols.OAuth2.BuildingBlocks {
         public override Task<HttpRequest?> Process(Dictionary<string, string?> parameters, IProvider tokenProvider, TokenResult tokenResult) {
             var uri = _uriSelector(tokenProvider.SiteSettings);
             var request = HttpRequest.CreatePost(uri);
+            request.Headers[HttpRequestHeaders.UserAgent] = "OAuch";
             request.Headers[HttpRequestHeaders.ContentType] = "application/x-www-form-urlencoded";
             if (uri.IsSecure())
                 request.ClientCertificates = tokenProvider.SiteSettings.Certificates;
@@ -29,6 +28,6 @@ namespace OAuch.Protocols.OAuth2.BuildingBlocks {
             return Task.FromResult<HttpRequest?>(request);
         }
         public Action<IProvider, HttpRequest, Dictionary<string, string?>> AddClientAuthenticationMethod { get; set; }
-        private Func<SiteSettings, string> _uriSelector;
+        private readonly Func<SiteSettings, string> _uriSelector;
     }
 }

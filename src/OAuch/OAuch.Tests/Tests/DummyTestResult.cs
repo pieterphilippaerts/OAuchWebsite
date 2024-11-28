@@ -1,14 +1,7 @@
-﻿using OAuch.Compliance.Tests.ApiEndpoint;
-using OAuch.Compliance.Tests.Features;
-using OAuch.Protocols.OAuth2;
-using OAuch.Shared.Enumerations;
-using OAuch.Shared;
+﻿using OAuch.Shared;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Diagnostics;
+using System.Threading.Tasks;
 
 namespace OAuch.Compliance.Tests {
     /// <summary>
@@ -22,10 +15,12 @@ namespace OAuch.Compliance.Tests {
     }
     public class DummyTestImplementation : TestImplementation {
         public DummyTestImplementation(TestRunContext context, DummyTestResult result) : base(context, result) { }
+#pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
         public override async Task Run() {
             // This is a dummy test implementation that should never be run by OAuch
             Debugger.Break();
             throw new NotSupportedException();
         }
+#pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
     }
 }

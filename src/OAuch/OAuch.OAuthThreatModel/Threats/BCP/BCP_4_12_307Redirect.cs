@@ -1,10 +1,5 @@
 ﻿using OAuch.OAuthThreatModel.Attackers;
 using OAuch.OAuthThreatModel.Consequences;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace OAuch.OAuthThreatModel.Threats.BCP {
     public class BCP_4_12_307Redirect : Threat {
@@ -21,5 +16,6 @@ namespace OAuch.OAuthThreatModel.Threats.BCP {
             "If an HTTP redirection is used for such a request, the authorization server SHOULD use HTTP status code 303"
             ];
         public override AttackerType[] Attackers => [AttackerTypes.WebAttacker];
+        public override InvolvedParty[] Parties => [InvolvedParty.AuthorizationEndpoint];
     }
 }

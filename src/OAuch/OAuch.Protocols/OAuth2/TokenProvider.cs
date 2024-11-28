@@ -1,7 +1,5 @@
-﻿using Newtonsoft.Json;
-using OAuch.Protocols.Http;
+﻿using OAuch.Protocols.Http;
 using OAuch.Protocols.JWT;
-using OAuch.Protocols.OAuth2.BuildingBlocks;
 using OAuch.Protocols.OAuth2.Pipeline;
 using OAuch.Shared;
 using OAuch.Shared.Enumerations;
@@ -12,7 +10,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
-using System.Text;
 using System.Threading.Tasks;
 using System.Web;
 
@@ -26,10 +23,8 @@ namespace OAuch.Protocols.OAuth2 {
             if (defClient == context.SiteSettings.DefaultClient) {
                 this.Context = context;
             } else {
-                this.Context = context with
-                {
-                    SiteSettings = context.SiteSettings with
-                    {
+                this.Context = context with {
+                    SiteSettings = context.SiteSettings with {
                         DefaultClient = defClient
                     }
                 };
@@ -54,10 +49,10 @@ namespace OAuch.Protocols.OAuth2 {
 
         public async Task<TokenResult> GetToken() {
             if (Context.SiteSettings.TokenDelay > 0 && Context.SiteSettings.TokenDelay <= 15) {
-                Log.Log($"Waiting { Context.SiteSettings.TokenDelay } second(s)");
+                Log.Log($"Waiting {Context.SiteSettings.TokenDelay} second(s)");
                 await Task.Delay(Context.SiteSettings.TokenDelay * 1000);
             }
-            Log.Log($"Requesting a token via the { Name }");
+            Log.Log($"Requesting a token via the {Name}");
             OnNewTokenRequested?.Invoke(this);
             var result = new TokenResult();
             try {
@@ -209,7 +204,7 @@ namespace OAuch.Protocols.OAuth2 {
             ret.Items["access_token"] = accessToken;
             return ret;
         }
-        public static ServerResponse FromRefreshToken (string refreshToken) {
+        public static ServerResponse FromRefreshToken(string refreshToken) {
             var ret = new ServerResponse();
             ret.Items["refresh_token"] = refreshToken;
             return ret;
@@ -280,9 +275,9 @@ namespace OAuch.Protocols.OAuth2 {
 
             ServerResponse FromRawDictionary(Dictionary<string, string> items, string original, LogContext log) {
                 if (requestedMode == ResponseModes.FormPostJwt || requestedMode == ResponseModes.QueryJwt || requestedMode == ResponseModes.FragmentJwt) {
-                    if (!items.ContainsKey("response"))
+                    if (!items.TryGetValue("response", out string? value))
                         return new ServerResponse { OriginalContents = original, UnexpectedError = new ArgumentException("The 'response' parameter was expected but not present.") };
-                    var formJwt = JsonWebToken.CreateFromString(items["response"], log);
+                    var formJwt = JsonWebToken.CreateFromString(value, log);
                     if (formJwt == null)
                         return new ServerResponse { OriginalContents = original, UnexpectedError = new ArgumentException("The encoded JWT in the 'response' parameter could not be decoded.") };
                     items = DecodeJwt(formJwt);
@@ -304,11 +299,10 @@ namespace OAuch.Protocols.OAuth2 {
             try {
                 string c = response.ToString(true);
                 var contentType = response.Headers.Get("Content-Type");
-                if (contentType == null)
-                    contentType = "application/json";
+                contentType ??= "application/json";
                 int si = contentType.IndexOf(';');
                 if (si >= 0)
-                    contentType = contentType.Substring(0, si);
+                    contentType = contentType[..si];
                 contentType = contentType.Trim().ToLower();
 
                 IDictionary<string, string> dictionary;
@@ -330,8 +324,12 @@ namespace OAuch.Protocols.OAuth2 {
     }
 
     public class TokenProviderSettings {
-        public string Name { get; init; }
-        public string FlowType { get; init; }
+        public TokenProviderSettings(string name, string flowType) {
+            this.Name = name;
+            this.FlowType = flowType;
+        }
+        public string Name { get; }
+        public string FlowType { get; }
     }
     public class TokenProviderInfo {
         public TokenProviderSettings? Settings { get; set; }
@@ -349,8 +347,8 @@ namespace OAuch.Protocols.OAuth2 {
             this.Info = providerInfo;
         }
         public TokenProviderInfo Info { get; }
-        public string Name => Info.Settings!.Name;
-        public string FlowType => Info.Settings!.FlowType;
+        public string Name => Info.Settings?.Name ?? string.Empty;
+        public string FlowType => Info.Settings?.FlowType ?? string.Empty;
 
         public bool HasAccessTokens => Info.HasAccessTokens;
         public bool HasJwtAccessTokens => Info.HasJwtAccessTokens;
@@ -359,25 +357,16 @@ namespace OAuch.Protocols.OAuth2 {
         public bool HasRefreshTokens => Info.HasRefreshTokens;
 
         public TokenProvider CreateProvider(TestRunContext context) {
-            switch (FlowType) {
-                case OAuthHelper.TOKEN_FLOW_TYPE:
-                case OAuthHelper.IDTOKEN_TOKEN_FLOW_TYPE:
-                case OAuthHelper.IDTOKEN_FLOW_TYPE:
-                    return new ImplicitTokenProvider(Info.Settings, context);
-                case OAuthHelper.CLIENT_CREDENTIALS_FLOW_TYPE:
-                    return new ClientCredentialsTokenProvider(Info.Settings, context);
-                case OAuthHelper.CODE_FLOW_TYPE:
-                case OAuthHelper.CODE_IDTOKEN_FLOW_TYPE:
-                case OAuthHelper.CODE_IDTOKEN_TOKEN_FLOW_TYPE:
-                case OAuthHelper.CODE_TOKEN_FLOW_TYPE:
-                    return new AuthorizationCodeTokenProvider(Info.Settings, context);
-                case OAuthHelper.DEVICE_FLOW_TYPE:
-                    return new DeviceTokenProvider(Info.Settings, context);
-                case OAuthHelper.PASSWORD_FLOW_TYPE:
-                    return new PasswordTokenProvider(Info.Settings, context);
-                default:
-                    throw new NotSupportedException("The requested response type is not supported.");
-            }
+            if (Info.Settings == null)
+                throw new ArgumentNullException(nameof(context), "Settings cannot be null.");
+            return FlowType switch {
+                OAuthHelper.TOKEN_FLOW_TYPE or OAuthHelper.IDTOKEN_TOKEN_FLOW_TYPE or OAuthHelper.IDTOKEN_FLOW_TYPE => new ImplicitTokenProvider(Info.Settings, context),
+                OAuthHelper.CLIENT_CREDENTIALS_FLOW_TYPE => new ClientCredentialsTokenProvider(Info.Settings, context),
+                OAuthHelper.CODE_FLOW_TYPE or OAuthHelper.CODE_IDTOKEN_FLOW_TYPE or OAuthHelper.CODE_IDTOKEN_TOKEN_FLOW_TYPE or OAuthHelper.CODE_TOKEN_FLOW_TYPE => new AuthorizationCodeTokenProvider(Info.Settings, context),
+                OAuthHelper.DEVICE_FLOW_TYPE => new DeviceTokenProvider(Info.Settings, context),
+                OAuthHelper.PASSWORD_FLOW_TYPE => new PasswordTokenProvider(Info.Settings, context),
+                _ => throw new NotSupportedException("The requested response type is not supported."),
+            };
         }
     }
 }

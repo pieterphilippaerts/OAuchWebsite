@@ -1,10 +1,5 @@
 ﻿using OAuch.OAuthThreatModel.Attackers;
 using OAuch.OAuthThreatModel.Consequences;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace OAuch.OAuthThreatModel.Threats.Clients {
     public class T4_1_5_OpenRedirectorsAC : Threat {
@@ -20,6 +15,7 @@ namespace OAuch.OAuthThreatModel.Threats.Clients {
             "Require clients to register full redirect URI"
             ];
         public override AttackerType[] Attackers => [AttackerTypes.WebAttacker];
+        public override InvolvedParty[] Parties => [InvolvedParty.Client];
     }
     public class T4_1_5_OpenRedirectorsTiFC : Threat {
         public override string Id => "6819_4_1_5";
@@ -34,5 +30,6 @@ namespace OAuch.OAuthThreatModel.Threats.Clients {
             "Require clients to register full redirect URI"
             ];
         public override AttackerType[] Attackers => [AttackerTypes.WebAttacker];
+        public override InvolvedParty[] Parties => [InvolvedParty.Client];
     }
 }

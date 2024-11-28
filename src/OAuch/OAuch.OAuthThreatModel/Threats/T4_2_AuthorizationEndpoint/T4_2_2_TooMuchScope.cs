@@ -1,15 +1,8 @@
 ﻿using OAuch.OAuthThreatModel.Attackers;
 using OAuch.OAuthThreatModel.Consequences;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace OAuch.OAuthThreatModel.Threats.AuthorizationEndpoint
-{
-    public class T4_2_2_TooMuchScope : Threat
-    {
+namespace OAuch.OAuthThreatModel.Threats.AuthorizationEndpoint {
+    public class T4_2_2_TooMuchScope : Threat {
         public override string Description => "User Unintentionally Grants Too Much Access Scope";
 
         public override string Id => "6819_4_2_2";
@@ -23,5 +16,6 @@ namespace OAuch.OAuthThreatModel.Threats.AuthorizationEndpoint
             "Narrow the scope, based on the client."
             ];
         public override AttackerType[] Attackers => [AttackerTypes.WebAttacker];
+        public override InvolvedParty[] Parties => [InvolvedParty.AuthorizationEndpoint];
     }
 }

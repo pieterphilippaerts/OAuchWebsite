@@ -1,10 +1,5 @@
 ﻿using OAuch.OAuthThreatModel.Attackers;
 using OAuch.OAuthThreatModel.Consequences;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace OAuch.OAuthThreatModel.Threats.BCP {
     public class BCP_4_18_PostMessageAC : Threat {
@@ -23,6 +18,7 @@ namespace OAuch.OAuthThreatModel.Threats.BCP {
             "Clients MUST utilize exact string matching to compare the initiator origin of an in-browser message with the authorization server origin"
             ];
         public override AttackerType[] Attackers => [AttackerTypes.WebAttacker];
+        public override InvolvedParty[] Parties => [InvolvedParty.Client, InvolvedParty.AuthorizationEndpoint];
     }
     public class BCP_4_18_PostMessageTiFC : Threat {
         public override string Id => "BCP_4_18";
@@ -40,5 +36,6 @@ namespace OAuch.OAuthThreatModel.Threats.BCP {
             "Clients MUST utilize exact string matching to compare the initiator origin of an in-browser message with the authorization server origin"
             ];
         public override AttackerType[] Attackers => [AttackerTypes.WebAttacker];
+        public override InvolvedParty[] Parties => [InvolvedParty.Client, InvolvedParty.AuthorizationEndpoint];
     }
 }

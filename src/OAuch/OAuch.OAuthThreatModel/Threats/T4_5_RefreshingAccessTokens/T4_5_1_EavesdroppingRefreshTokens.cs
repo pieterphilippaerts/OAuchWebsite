@@ -1,10 +1,5 @@
 ﻿using OAuch.OAuthThreatModel.Attackers;
 using OAuch.OAuthThreatModel.Consequences;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace OAuch.OAuthThreatModel.Threats.RefreshingAccessTokens {
     public class T4_5_1_EavesdroppingRefreshTokens : Threat {
@@ -22,5 +17,6 @@ namespace OAuch.OAuthThreatModel.Threats.RefreshingAccessTokens {
             "If end-to-end confidentiality cannot be guaranteed, reducing scope and expiry time for issued access tokens can be used to reduce the damage in case of leaks"
             ];
         public override AttackerType[] Attackers => [AttackerTypes.NetworkAttacker];
+        public override InvolvedParty[] Parties => [InvolvedParty.TokenEndpoint];
     }
 }

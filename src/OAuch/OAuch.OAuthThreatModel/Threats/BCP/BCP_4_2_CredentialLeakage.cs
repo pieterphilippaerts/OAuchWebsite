@@ -1,10 +1,5 @@
 ﻿using OAuch.OAuthThreatModel.Attackers;
 using OAuch.OAuthThreatModel.Consequences;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace OAuch.OAuthThreatModel.Threats.BCP {
     public class BCP_4_2_1_CredentialLeakageFromClientViaRefererAC : Threat {
@@ -25,6 +20,7 @@ namespace OAuch.OAuthThreatModel.Threats.BCP {
             "Use the form post response mode instead of a redirect for the authorization response"
             ];
         public override AttackerType[] Attackers => [AttackerTypes.WebAttacker];
+        public override InvolvedParty[] Parties => [InvolvedParty.Client];
     }
     public class BCP_4_2_1_CredentialLeakageFromClientViaRefererImp : Threat {
         public override string Id => "BCP_4_2_1";
@@ -43,6 +39,7 @@ namespace OAuch.OAuthThreatModel.Threats.BCP {
             "Use the form post response mode instead of a redirect for the authorization response"
             ];
         public override AttackerType[] Attackers => [AttackerTypes.WebAttacker];
+        public override InvolvedParty[] Parties => [InvolvedParty.Client];
     }
 
 
@@ -65,6 +62,7 @@ namespace OAuch.OAuthThreatModel.Threats.BCP {
             "Use the form post response mode instead of a redirect for the authorization response"
             ];
         public override AttackerType[] Attackers => [AttackerTypes.WebAttacker];
+        public override InvolvedParty[] Parties => [InvolvedParty.AuthorizationEndpoint];
     }
     public class BCP_4_2_2_CredentialLeakageFromAuthServerViaRefererImp : Threat {
         public override string Id => "BCP_4_2_2";
@@ -85,5 +83,6 @@ namespace OAuch.OAuthThreatModel.Threats.BCP {
             "Use the form post response mode instead of a redirect for the authorization response"
             ];
         public override AttackerType[] Attackers => [AttackerTypes.WebAttacker];
+        public override InvolvedParty[] Parties => [InvolvedParty.AuthorizationEndpoint];
     }
 }

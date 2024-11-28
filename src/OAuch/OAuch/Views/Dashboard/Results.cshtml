@@ -23,11 +23,11 @@
             return "ok";
         return "nok";
     }
-    string Capitalize(string str) {
-        if (str.Length > 1)
-            return char.ToUpper(str[0]) + str.Substring(1);
-        return str.ToUpper();
-    }
+    // string Capitalize(string str) {
+    //     if (str.Length > 1)
+    //         return char.ToUpper(str[0]) + str.Substring(1);
+    //     return str.ToUpper();
+    // }
     string FormatOutcomeForThreat(ThreatReport report) {
         if (report.Outcome == null || report.Outcome == TestOutcomes.Failed)
             return "UNDETERMINED";
@@ -113,10 +113,10 @@
     }
     string FormatImprovements(MitigationImprovement report) {
         if (report.FullyMitigatesCount > 0 && report.PartiallyMitigatesCount > 0)
-            return $"Implementing this countermeasure could fully mitigate {report.FullyMitigatesCount} threat(s) and partially mitigate {report.PartiallyMitigatesCount} threat(s) [score: {report.Score.ToString("F2")}]";
+            return $"Implementing this countermeasure could fully mitigate {report.FullyMitigatesCount} threat(s) and partially mitigate {report.PartiallyMitigatesCount} threat(s)";
         else if (report.FullyMitigatesCount > 0)
-            return $"Implementing this countermeasure could fully mitigate {report.FullyMitigatesCount} threat(s) [score: {report.Score.ToString("F2")}]";
-        return $"Implementing this countermeasure could partially mitigate {report.PartiallyMitigatesCount} threat(s) [score: {report.Score.ToString("F2")}]";
+            return $"Implementing this countermeasure could fully mitigate {report.FullyMitigatesCount} threat(s)";
+        return $"Implementing this countermeasure could partially mitigate {report.PartiallyMitigatesCount} threat(s)";
     }
     int GetSortIndex(string threatId) {
         if (threatId.StartsWith("6819_")) {
@@ -254,9 +254,9 @@
                                 <ul>
                                     @foreach (var dc in Model.Result.DocumentCompliance) {
                                         if (dc.IsDocumentSupported) {
-                                            <li><strong>@dc.Document.Id</strong> with an overall failure rate of @FlToS(dc.OverallScore.FailureRate) (@FlToS(dc.MustScore.FailureRate) - @FlToS(dc.ShouldScore.FailureRate) - @FlToS(dc.MayScore.FailureRate))</li>
+                                            <li><strong>@Html.ActionLink(dc.Document.Id, "Info", "Documents", new { dc.Document.Id }, new { target = "_blank" })</strong> with an overall failure rate of @FlToS(dc.OverallScore.FailureRate) (@FlToS(dc.MustScore.FailureRate) - @FlToS(dc.ShouldScore.FailureRate) - @FlToS(dc.MayScore.FailureRate))</li>
                                         } else {
-                                            <li><strong>@dc.Document.Id</strong> is not supported</li>
+                                            <li><strong>@Html.ActionLink(dc.Document.Id, "Info", "Documents", new { dc.Document.Id }, new { target = "_blank" })</strong> is not supported</li>
                                         }
                                     }
                                 </ul>
@@ -410,7 +410,11 @@
                                                                 This threat can be mitigated if all of the following countermeasures are fully implemented:
                                                             </p>
                                                             <ul>
-                                                                @foreach (var cm in mit) {
+                                                                @{
+                                                                    var totalImpact = mit.MaxImpact;
+                                                                }
+                                                                @foreach (var cm in mit)
+                                                                {
                                                                     var to = GetTestOutcome(cm.TestId);
                                                                     <li>@HelperMethods.ShortenTestId(cm.TestId) [<span class="@OutcomeClass(to, false)">@FormatOutcomeForCounterMeasure(to)</span>] - @Html.ActionLink("more info", "Info", "Tests", new { id = cm.TestId })</li>
                                                                 }
@@ -426,13 +430,17 @@
                                                                 @for (int i = 0; i < ireport.ThreatInstance.MitigatedBy.Count; i++) {
                                                                     var mit = ireport.ThreatInstance.MitigatedBy[i];
                                                                     <li style="list-style:none; margin-left: -26px;"><strong>Set #@(i + 1)</strong></li>
-                                                                    foreach (var cm in mit) {
+                                                                    var totalImpact = mit.MaxImpact;
+                                                                    foreach (var cm in mit)
+                                                                    {
                                                                         var to = GetTestOutcome(cm.TestId);
                                                                         <li>@HelperMethods.ShortenTestId(cm.TestId) [<span class="@OutcomeClass(to, false)">@FormatOutcomeForCounterMeasure(to)</span>] - @Html.ActionLink("more info", "Info", "Tests", new { id = cm.TestId })</li>
                                                                     }
                                                                 }
                                                             </ul>
-                                                            <p>&nbsp;</p>
+                                                        }
+                                                        if (threatReport.CompletenessScore != null) {
+                                                            <p>The threat implementation score is @threatReport.CompletenessScore.Value.ToString("P0")</p>
                                                         }
                                                     }
                                                 }

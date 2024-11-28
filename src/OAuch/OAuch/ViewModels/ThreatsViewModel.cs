@@ -1,8 +1,8 @@
-﻿using OAuch.Compliance;
+﻿using OAuch.Compliance.Threats;
 using System.Collections.Generic;
 
 namespace OAuch.ViewModels {
     public class ThreatsViewModel {
-        public IReadOnlyList<Threat> Threats { get; set; }
+        public required IReadOnlyList<Threat> Threats { get; set; }
     }
 }

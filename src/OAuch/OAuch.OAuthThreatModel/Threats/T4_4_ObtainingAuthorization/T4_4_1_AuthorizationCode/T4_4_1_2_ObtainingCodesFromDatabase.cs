@@ -1,14 +1,8 @@
 ﻿using OAuch.OAuthThreatModel.Attackers;
 using OAuch.OAuthThreatModel.Consequences;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace OAuch.OAuthThreatModel.Threats.ObtainingAuthorization.AuthorizationCode {
-    public class T4_4_1_2_ObtainingCodesFromDatabase : Threat
-    {
+    public class T4_4_1_2_ObtainingCodesFromDatabase : Threat {
         public override string Description => "Obtaining Authorization \"codes\" from Authorization Server Database";
 
         public override string Id => "6819_4_4_1_2";
@@ -24,5 +18,6 @@ namespace OAuch.OAuthThreatModel.Threats.ObtainingAuthorization.AuthorizationCod
             "Enforce standard SQL injection countermeasures"
             ];
         public override AttackerType[] Attackers => [AttackerTypes.SystemsAttacker];
+        public override InvolvedParty[] Parties => [InvolvedParty.TokenEndpoint];
     }
 }

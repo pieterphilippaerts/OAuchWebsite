@@ -1,15 +1,8 @@
 ﻿using OAuch.OAuthThreatModel.Attackers;
 using OAuch.OAuthThreatModel.Consequences;
-using System;
-using System.Buffers.Text;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace OAuch.OAuthThreatModel.Threats.ObtainingAuthorization.AuthorizationCode {
-    public class T4_4_1_3_GuessingAuthorizationCodes : Threat
-    {
+    public class T4_4_1_3_GuessingAuthorizationCodes : Threat {
         public override string Description => "Online Guessing of Authorization \"codes\"";
 
         public override string Id => "6819_4_4_1_3";
@@ -26,5 +19,6 @@ namespace OAuch.OAuthThreatModel.Threats.ObtainingAuthorization.AuthorizationCod
             "Use short expiry time for tokens"
             ];
         public override AttackerType[] Attackers => [AttackerTypes.WebAttacker];
+        public override InvolvedParty[] Parties => [InvolvedParty.TokenEndpoint];
     }
 }
