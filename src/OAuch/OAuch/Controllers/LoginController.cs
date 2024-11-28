@@ -46,9 +46,11 @@ namespace OAuch.Controllers {
                     }
                 } catch { /* captcha verification failed */ }
             }
+#if !DEBUG // allow debug mode to circumvent captcha
             if (!captchaSucceeded) {
                 return RedirectToAction("WithLink");
             }
+#endif
 
             // captcha succeeded
             UserSession? session = null;

@@ -8,8 +8,8 @@
         public string EMailTo { get; set; }
         public string EMailHost { get; set; }
 
-        public string FacebookClientId { get; set; }
-        public  string FacebookClientSecret { get; set; }
+        //public string FacebookClientId { get; set; }
+        //public  string FacebookClientSecret { get; set; }
         
         public  string MicrosoftClientId { get; set; }
         public  string MicrosoftClientSecret { get; set; }

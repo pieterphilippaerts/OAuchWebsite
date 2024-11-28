@@ -34,9 +34,9 @@
   </ItemGroup>
 	
   <ItemGroup>
-    <PackageReference Include="Microsoft.AspNetCore.Authentication.Facebook" Version="8.0.4" />
-      <PackageReference Include="Microsoft.AspNetCore.Authentication.Google" Version="8.0.4" />
-	  <PackageReference Include="Microsoft.AspNetCore.Authentication.MicrosoftAccount" Version="8.0.4" />
+    <PackageReference Include="Azure.Identity" Version="1.13.1" />
+      <PackageReference Include="Microsoft.AspNetCore.Authentication.Google" Version="9.0.0" />
+	  <PackageReference Include="Microsoft.AspNetCore.Authentication.MicrosoftAccount" Version="9.0.0" />
 	      <None Include="wwwroot\ms-icon-310x310.png">
       <Pack>True</Pack>
       <PackagePath>\</PackagePath>
@@ -48,6 +48,7 @@
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation" Version="9.0.0" />
     <PackageReference Include="Microsoft.AspNetCore.Razor.Language" Version="6.0.36" />
     <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="9.0.0" />
+    <PackageReference Include="Microsoft.Build" Version="17.12.6" />
     <PackageReference Include="Microsoft.Build.Tasks.Core" Version="17.12.6" />
     <PackageReference Include="Microsoft.Build.Utilities.Core" Version="17.12.6" />
     <PackageReference Include="Microsoft.CodeAnalysis.Analyzers" Version="3.11.0">
@@ -57,11 +58,14 @@
     <PackageReference Include="Microsoft.CodeAnalysis.Common" Version="4.11.0" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" Version="4.11.0" />
     <PackageReference Include="Microsoft.CodeAnalysis.Workspaces.MSBuild" Version="4.11.0" />
+    <PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
+    <PackageReference Include="Microsoft.Data.SqlClient" Version="5.2.2" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.0">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <PackageReference Include="Microsoft.EntityFrameworkCore.Proxies" Version="9.0.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="9.0.0" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="9.0.0">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -88,6 +92,7 @@
     <PackageReference Include="System.Text.Encodings.Web" Version="9.0.0" />
     <PackageReference Include="System.Threading.Channels" Version="9.0.0" />
     <PackageReference Include="System.Threading.Tasks.Dataflow" Version="9.0.0" />
+    <PackageReference Include="System.Threading.Tasks.Extensions" Version="4.6.0" />
     <PackageReference Include="System.Windows.Extensions" Version="9.0.0" />
   </ItemGroup>
 
