@@ -9,11 +9,13 @@ namespace OAuch.Controllers {
     public class HomeController : BaseController {
         public HomeController() { }
 
+#pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
         public async Task<IActionResult> Index() {
             if (this.OAuchInternalId != null)
                 return RedirectToAction("Index", "Dashboard");
             return View();
         }
+#pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
         public IActionResult Faq() {
             return View();
         }

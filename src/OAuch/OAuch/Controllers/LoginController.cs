@@ -29,9 +29,9 @@ namespace OAuch.Controllers {
         }
         [HttpPost]
         public async Task<IActionResult> CreateLink([Bind(Prefix = "g-recaptcha-response")] string? recaptchaResponse) {
-            var secrets = ServiceLocator.Resolve<Secrets>()!;
+            var secrets = ServiceLocator.Resolve<Secrets>();
             bool captchaSucceeded = false;
-            if (recaptchaResponse != null) {
+            if (recaptchaResponse != null && secrets != null && secrets.CaptchaSiteSecret != null) {
                 try {
                     var http = HttpHelper.CreateTransient();
                     var captchaRequest = HttpRequest.CreatePost("https://www.google.com/recaptcha/api/siteverify");
@@ -42,7 +42,7 @@ namespace OAuch.Controllers {
                     if (response.StatusCode == HttpStatusCode.OK) {
                         var responseJson = Encoding.UTF8.GetString(response.Content);
                         var captchaResponse = JsonConvert.DeserializeObject<CaptchaVerificationResult>(responseJson);
-                        captchaSucceeded = captchaResponse.Success && captchaResponse.Hostname?.ToLower() == "oauch.io";
+                        captchaSucceeded = captchaResponse != null && captchaResponse.Success && captchaResponse.Hostname?.ToLower() == "oauch.io";
                     }
                 } catch { /* captcha verification failed */ }
             }
@@ -80,24 +80,24 @@ namespace OAuch.Controllers {
                 }
             }
             // show the link to the user
-            var model = new LoginLinkViewModel();
-            model.LinkId = session.LoginId;
+            var model = new LoginLinkViewModel {
+                LinkId = session.LoginId
+            };
             return View(model);
         }
         public IActionResult Link(string id) {
             if (!Guid.TryParseExact(id, "N", out var guid)) {
                 return NotFound();
             }
-            using (var db = new OAuchDbContext()) {
-                var session = db.UserSessions.Where(s => s.Scheme == OAuchLoginLinkScheme && s.LoginId == id).FirstOrDefault();
-                if (session == null)
-                    return NotFound();
-                SignIn(session.InternalId);
-                session.LoggedInAt = DateTime.Now;
-                session.RemoteIp = this.HttpContext.Connection.RemoteIpAddress?.ToString();
-                db.SaveChanges();
-                return RedirectToAction("Index", "Dashboard");
-            }
+            using var db = new OAuchDbContext();
+            var session = db.UserSessions.Where(s => s.Scheme == OAuchLoginLinkScheme && s.LoginId == id).FirstOrDefault();
+            if (session == null)
+                return NotFound();
+            SignIn(session.InternalId);
+            session.LoggedInAt = DateTime.Now;
+            session.RemoteIp = this.HttpContext.Connection.RemoteIpAddress?.ToString();
+            db.SaveChanges();
+            return RedirectToAction("Index", "Dashboard");
         }
         public async Task WithGoogle() {
             var authProperties = new AuthenticationProperties
@@ -180,9 +180,9 @@ namespace OAuch.Controllers {
 
         [NonAction]
         private async void SignIn(Guid internalId) {
-            var oauchIdentity = new ClaimsIdentity(new Claim[] {
-                        new Claim(OAuchInternalIdClaimType, internalId.ToString("N"))
-                    }, "OAuchAuthentication");
+            var oauchIdentity = new ClaimsIdentity([
+                        new(OAuchInternalIdClaimType, internalId.ToString("N"))
+                    ], "OAuchAuthentication");
             await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(oauchIdentity), new AuthenticationProperties
             {
                 IsPersistent = true

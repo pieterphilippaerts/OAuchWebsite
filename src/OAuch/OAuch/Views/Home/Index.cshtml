@@ -1,5 +1,8 @@
-﻿@{ 
+﻿@using OAuch.Helpers
+@using OAuch.Shared
+@{
     ViewData["Title"] = "Welcome!";
+    var secrets = ServiceLocator.Resolve<Secrets>();
 }
 <div class="row">
     <div class="col-sm-12 offset-md-1 col-md-10 offset-lg-2 col-lg-8 offset-xl-2 col-xl-5 ">
@@ -17,15 +20,21 @@
             adheres to the standards and mitigates known threats. OAuch generates a report based on the analysis of the
             tests and identifies potential weaknesses.
         </p>
+        @if (secrets != null && secrets.CaptchaSiteKey != null && secrets.CaptchaSiteSecret != null) {
+            <p style="text-align: center;">
+                <a href="/Login/WithLink" class="btn btn-primary btn-lg" style="margin: 10px; padding-left: 40px; padding-right: 40px;">Continue without signing in</a>
+            </p>
+            <p style="text-align: center;">
+                ... or sign in with:
+            </p>
+        }
         <p style="text-align: center;">
-            <a href="/Login/WithLink" class="btn btn-primary btn-lg" style="margin: 10px; padding-left: 40px; padding-right: 40px;">Continue without signing in</a>
-        </p>
-        <p style="text-align: center;">
-            ... or sign in with:
-        </p>
-        <p style="text-align: center;">
-            <a href="/Login/WithGoogle" class="btn btn-gg btn-lg" style="margin: 10px; padding-left: 40px; padding-right: 40px;"><i class="fab fa-google mr-2"></i> Google</a>
-            <a href="/Login/WithMicrosoft" class="btn btn-ms btn-lg" style="margin: 10px; padding-left: 40px; padding-right: 40px;"><i class="fab fa-microsoft mr-2"></i> Microsoft</a>
+            @if (secrets != null && secrets.GoogleClientId != null) {
+                <a href="/Login/WithGoogle" class="btn btn-gg btn-lg" style="margin: 10px; padding-left: 40px; padding-right: 40px;"><i class="fab fa-google mr-2"></i> Google</a>
+            }
+            @if (secrets != null && secrets.MicrosoftClientId != null) {
+                <a href="/Login/WithMicrosoft" class="btn btn-ms btn-lg" style="margin: 10px; padding-left: 40px; padding-right: 40px;"><i class="fab fa-microsoft mr-2"></i> Microsoft</a>
+            }
             @*<a href="/Login/WithFacebook" class="btn btn-fb btn-lg" style="margin: 10px; padding-left: 40px; padding-right: 40px;"><i class="fab fa-facebook mr-2"></i> Facebook</a>*@
             @*<a href="/Login/WithTwitter" class="btn btn-tw btn-lg" style="margin: 10px; padding-left: 40px; padding-right: 40px;"><i class="fab fa-twitter mr-2"></i> Twitter</a>*@
         </p>

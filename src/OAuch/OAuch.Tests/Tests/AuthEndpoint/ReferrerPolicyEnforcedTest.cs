@@ -45,7 +45,7 @@ namespace OAuch.Compliance.Tests.AuthEndpoint {
 
             var header = response.Headers.Get("Referrer-Policy");
             if (header != null) {
-                if (header.IndexOf(',') >= 0) {
+                if (header.Contains(',')) {
                     var allHeaders = header.Split(',');
                     header = allHeaders[allHeaders.Length - 1]; // uses a comma-separated list with the desired policy specified last
                 }

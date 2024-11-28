@@ -52,7 +52,7 @@ namespace OAuch.Compliance.Tests.ApiEndpoint {
                 } else {
                     var safeValues = new string[] { "private", "no-store" };
                     var parts = value.Split(',');
-                    if (safeValues.Any(sv => parts.Any(p => p.Trim().ToLower() == sv))) {
+                    if (safeValues.Any(sv => parts.Any(p => p.Trim().Equals(sv, StringComparison.CurrentCultureIgnoreCase)))) {
                         LogInfo("The server sent a Cache-Control header");
                         Result.Outcome = TestOutcomes.SpecificationFullyImplemented;
                     } else {

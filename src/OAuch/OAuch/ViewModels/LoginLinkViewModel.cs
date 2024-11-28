@@ -5,6 +5,6 @@ using System.Threading.Tasks;
 
 namespace OAuch.ViewModels {
     public class LoginLinkViewModel {
-        public string LinkId { get; set; }
+        public required string LinkId { get; set; }
     }
 }

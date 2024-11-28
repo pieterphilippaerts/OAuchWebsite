@@ -48,16 +48,17 @@ namespace OAuch {
             //    options.MaxAge = TimeSpan.FromSeconds(63072000);
             //});
 
-            services.AddAuthentication(options => {
+            var servBuilder = services.AddAuthentication(options => {
                 options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
             })
                 .AddCookie(CookieAuthenticationDefaults.AuthenticationScheme, options => {
                     options.LoginPath = "/Home";
                     options.ClaimsIssuer = "OAUCH";
-                })
-                .AddGoogle(options => {
+                });
+            if (secrets.GoogleClientId != null)
+                servBuilder = servBuilder.AddGoogle(options => {
                     options.ClientId = secrets.GoogleClientId;
-                    options.ClientSecret = secrets.GoogleClientSecret;
+                    options.ClientSecret = secrets.GoogleClientSecret ?? "";
                     options.UsePkce = true;
                     options.AccessDeniedPath = "/";
                 })
@@ -69,16 +70,24 @@ namespace OAuch {
                 //})
                 .AddMicrosoftAccount(options => {
                     options.ClientId = secrets.MicrosoftClientId;
-                    options.ClientSecret = secrets.MicrosoftClientSecret;
+                    options.ClientSecret = secrets.MicrosoftClientSecret ?? "";
                     options.UsePkce = true;
                     options.AccessDeniedPath = "/";
                 });
-                //.AddTwitter(options => {
-                //    options.ConsumerKey = secrets.TwitterClientId;
-                //    options.ConsumerSecret = secrets.TwitterClientSecret;
-                //    options.RetrieveUserDetails = false;
-                //    options.AccessDeniedPath = "/";
-                //});
+
+            //if (secrets.FacebookClientId != null)
+            //    servBuilder = servBuilder.AddFacebook(options => {
+            //        options.ClientId = secrets.FacebookClientId;
+            //        options.ClientSecret = secrets.FacebookClientSecret ?? "";
+            //        options.UsePkce = true;
+            //        options.AccessDeniedPath = "/";
+            //    });
+            //.AddTwitter(options => {
+            //    options.ConsumerKey = secrets.TwitterClientId;
+            //    options.ConsumerSecret = secrets.TwitterClientSecret;
+            //    options.RetrieveUserDetails = false;
+            //    options.AccessDeniedPath = "/";
+            //});
 
             // add logging services
             services.AddSingleton<ILogConverter<Exception>>(new ExceptionConverter());
