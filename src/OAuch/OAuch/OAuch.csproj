@@ -34,9 +34,9 @@
   </ItemGroup>
 	
   <ItemGroup>
-    <PackageReference Include="Azure.Identity" Version="1.13.1" />
-      <PackageReference Include="Microsoft.AspNetCore.Authentication.Google" Version="9.0.0" />
-	  <PackageReference Include="Microsoft.AspNetCore.Authentication.MicrosoftAccount" Version="9.0.0" />
+    <PackageReference Include="Azure.Identity" Version="1.14.0" />
+      <PackageReference Include="Microsoft.AspNetCore.Authentication.Google" Version="9.0.5" />
+	  <PackageReference Include="Microsoft.AspNetCore.Authentication.MicrosoftAccount" Version="9.0.5" />
 	      <None Include="wwwroot\ms-icon-310x310.png">
       <Pack>True</Pack>
       <PackagePath>\</PackagePath>
@@ -62,7 +62,7 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <PackageReference Include="Microsoft.EntityFrameworkCore.Proxies" Version="9.0.5" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="9.0.5" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="9.0.5" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="9.0.5">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -90,6 +90,10 @@
     <PackageReference Include="System.Threading.Channels" Version="9.0.5" />
     <PackageReference Include="System.Threading.Tasks.Dataflow" Version="9.0.5" />
     <PackageReference Include="System.Windows.Extensions" Version="9.0.5" />
+    <PackageReference Include="Microsoft.Build" Version="17.14.8" />
+	<PackageReference Include="System.Threading.Tasks.Extensions" Version="4.6.3" />
+	<PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
+	<PackageReference Include="Microsoft.Data.SqlClient" Version="6.0.2" />
   </ItemGroup>
 
   <ItemGroup>
